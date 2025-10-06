@@ -12,4 +12,7 @@
  */
 #define VIRT_FDT_LOAD_ADDR 0x80200000UL
 
+void init_service_vm_vfdt(struct acrn_vm *vm);
+void arch_init_service_vm_vfdt(struct acrn_vm *vm);
+
 #endif /* VFDT_H */
