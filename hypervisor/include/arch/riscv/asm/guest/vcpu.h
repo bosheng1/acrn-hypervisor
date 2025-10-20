@@ -56,7 +56,6 @@ struct acrn_vcpu_arch {
 	struct riscv_vcpu_guest_ctx gctx;
 	struct riscv_vcpu_host_ctx hctx;
 	bool context_updated;
-
 } __aligned(PAGE_SIZE);
 
 struct acrn_vcpu;

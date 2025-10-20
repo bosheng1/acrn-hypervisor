@@ -11,6 +11,8 @@
 #include <vuart.h>
 #include <fdt_api.h>
 
+#include <asm/guest/vsbi.h>
+
 #define INVALID_PIO_IDX	-1U
 #define UART_PIO_IDX0	INVALID_PIO_IDX
 /* FIXME: dummy. to be implemented later */
@@ -18,6 +20,9 @@
 
 struct vm_arch {
 	uint8_t fdt_raw[MAX_FDT_SIZE];
+
+	const struct acrn_vsbi_extension *vsbi_exts[MAX_NUM_SUPPORTED_VSBI_EXT];
+	uint16_t n_vsbi_exts;
 };
 
 struct acrn_vcpu;
