@@ -16,6 +16,7 @@
 #include <logmsg.h>
 #include <trace.h>
 #include <asm/rtct.h>
+#include <stg2_mm.h>
 
 #define DBG_LEVEL_EPT	6U
 
@@ -443,7 +444,7 @@ void ept_flush_leaf_page(uint64_t *pge, uint64_t size)
 /**
  * @pre: vm != NULL.
  */
-void *get_eptp(struct acrn_vm *vm)
+void *arch_get_stg2ptp(struct acrn_vm *vm)
 {
 	void *eptp;
 	struct acrn_vcpu *vcpu = vcpu_from_pid(vm, get_pcpu_id());
@@ -467,7 +468,7 @@ void walk_ept_table(struct acrn_vm *vm, pge_handler cb)
 	uint64_t i, j, k, m;
 
 	for (i = 0UL; i < PTRS_PER_PGTL3E; i++) {
-		pml4e = pgtl3e_offset((uint64_t *)get_eptp(vm), i << PML4E_SHIFT);
+		pml4e = pgtl3e_offset((uint64_t *)get_stg2ptp(vm), i << PML4E_SHIFT);
 		if (!table->pgentry_present(*pml4e)) {
 			continue;
 		}

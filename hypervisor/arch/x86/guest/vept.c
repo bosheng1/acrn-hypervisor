@@ -13,6 +13,7 @@
 #include <asm/guest/ept.h>
 #include <asm/guest/vept.h>
 #include <asm/guest/nested.h>
+#include <stg2_mm.h>
 
 #define VETP_LOG_LEVEL			LOG_DEBUG
 #define CONFIG_MAX_GUEST_EPT_NUM	(MAX_ACTIVE_VVMCS_NUM * MAX_VCPUS_PER_VM)
@@ -268,7 +269,7 @@ static uint64_t generate_shadow_ept_entry(struct acrn_vcpu *vcpu, uint64_t guest
 	 */
 	if (is_leaf_ept_entry(guest_ept_entry, guest_ept_level)) {
 		ASSERT(guest_ept_level == PGT_LVL0, "Only support 4K page for guest EPT!");
-		ept_entry = get_leaf_entry((guest_ept_entry & EPT_ENTRY_PFN_MASK), get_eptp(vcpu->vm), &ept_level);
+		ept_entry = get_leaf_entry((guest_ept_entry & EPT_ENTRY_PFN_MASK), get_stg2ptp(vcpu->vm), &ept_level);
 		if (ept_entry != 0UL) {
 			/*
 			 * TODO:
