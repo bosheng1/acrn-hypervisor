@@ -26,5 +26,12 @@
 #define PGTL0_MASK (~(PGTL0_SIZE - 1UL))
 #define PTRS_PER_PGTL0E PTRS_PER_PTE
 #define PAGE_PFN_OFFSET 12
-
+/**
+ * Invalid HPA is defined for error checking,
+ * according to SDM vol.3A 4.1.4, the maximum
+ * host physical address width is 52
+ */
+#define INVALID_HPA		(0x1UL << 52U)
+#define INVALID_GPA		(0x1UL << 52U)
+#define STAGE2_PFN_HIGH_MASK  	EPT_PFN_HIGH_MASK
 #endif /*__X86_MM_COMMON_H__ */

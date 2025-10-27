@@ -8,6 +8,9 @@
 #ifndef STAGE2_MM_H
 #define STAGE2_MM_H
 
+#include <asm/mm_common.h>
+#include <vm.h>
+
 /**
  * @brief Get EPT pointer of the vm
  *

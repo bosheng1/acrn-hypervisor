@@ -34,6 +34,29 @@ int32_t gva2gpa(struct acrn_vcpu *vcpu, uint64_t gva, uint64_t *gpa, uint32_t *e
 
 enum vm_paging_mode get_vcpu_paging_mode(struct acrn_vcpu *vcpu);
 
+/**
+ * @brief Translating from guest-physical address to host-physcial address
+ *
+ * @param[in] vm the pointer that points to VM data structure
+ * @param[in] gpa the specified guest-physical address
+ *
+ * @retval hpa the host physical address mapping to the \p gpa
+ * @retval INVALID_HPA the HPA of parameter gpa is unmapping
+ */
+uint64_t gpa2hpa(struct acrn_vm *vm, uint64_t gpa);
+/**
+ * @brief Translating from guest-physical address to host-physcial address
+ *
+ * @param[in] vm the pointer that points to VM data structure
+ * @param[in] gpa the specified guest-physical address
+ * @param[out] size the pointer that returns the page size of
+ *                  the page in which the gpa is
+ *
+ * @retval hpa the host physical address mapping to the \p gpa
+ * @retval INVALID_HPA the HPA of parameter gpa is unmapping
+ */
+uint64_t local_gpa2hpa(struct acrn_vm *vm, uint64_t gpa, uint32_t *size);
+
 /* gpa --> hpa -->hva */
 void *gpa2hva(struct acrn_vm *vm, uint64_t x);
 
@@ -111,6 +134,9 @@ int32_t copy_from_gva(struct acrn_vcpu *vcpu, void *h_ptr, uint64_t gva,
  */
 int32_t copy_to_gva(struct acrn_vcpu *vcpu, void *h_ptr, uint64_t gva,
 	uint32_t size, uint32_t *err_code, uint64_t *fault_addr);
+
+uint32_t local_copy_gpa(struct acrn_vm *vm, void *h_ptr, uint64_t gpa,
+	uint32_t size, uint32_t fix_pg_size, bool cp_from_vm);
 /**
  * @}
  */

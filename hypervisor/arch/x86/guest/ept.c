@@ -276,42 +276,6 @@ void destroy_ept(struct acrn_vm *vm)
 }
 
 /**
- * @pre: vm != NULL.
- */
-uint64_t local_gpa2hpa(struct acrn_vm *vm, uint64_t gpa, uint32_t *size)
-{
-	/* using return value INVALID_HPA as error code */
-	uint64_t hpa = INVALID_HPA;
-	const uint64_t *pgentry;
-	uint64_t pg_size = 0UL;
-	void *eptp;
-
-	eptp = get_eptp(vm);
-	pgentry = pgtable_lookup_entry((uint64_t *)eptp, gpa, &pg_size, &vm->stg2_pgtable);
-	if (pgentry != NULL) {
-		hpa = (((*pgentry & (~EPT_PFN_HIGH_MASK)) & (~(pg_size - 1UL)))
-				| (gpa & (pg_size - 1UL)));
-	}
-
-	/**
-	 * If specified parameter size is not NULL and
-	 * the HPA of parameter gpa is found, pg_size shall
-	 * be returned through parameter size.
-	 */
-	if ((size != NULL) && (hpa != INVALID_HPA)) {
-		*size = (uint32_t)pg_size;
-	}
-
-	return hpa;
-}
-
-/* using return value INVALID_HPA as error code */
-uint64_t gpa2hpa(struct acrn_vm *vm, uint64_t gpa)
-{
-	return local_gpa2hpa(vm, gpa, NULL);
-}
-
-/**
  * @pre: the gpa and hpa are identical mapping in Service VM.
  */
 uint64_t service_vm_hpa2gpa(uint64_t hpa)

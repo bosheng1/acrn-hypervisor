@@ -204,6 +204,7 @@ COMMON_C_SRCS += boot/multiboot/multiboot2.c
 endif
 COMMON_C_SRCS += boot/bare.c
 COMMON_C_SRCS += common/stg2_mm.c
+COMMON_C_SRCS += common/guest_memory.c
 
 # dm componment
 COMMON_C_SRCS += dm/vuart.c

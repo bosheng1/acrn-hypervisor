@@ -8,16 +8,9 @@
 #define EPT_H
 #include <types.h>
 #include <mmu.h>
+#include <stg2_mm.h>
 
 typedef void (*pge_handler)(uint64_t *pgentry, uint64_t size);
-
-/**
- * Invalid HPA is defined for error checking,
- * according to SDM vol.3A 4.1.4, the maximum
- * host physical address width is 52
- */
-#define INVALID_HPA	(0x1UL << 52U)
-#define INVALID_GPA	(0x1UL << 52U)
 
 struct acrn_vm;
 
@@ -40,28 +33,6 @@ bool ept_is_valid_mr(struct acrn_vm *vm, uint64_t mr_base_gpa, uint64_t size);
  * @param[inout] vm the pointer that points to VM data structure
  */
 void destroy_ept(struct acrn_vm *vm);
-/**
- * @brief Translating from guest-physical address to host-physcial address
- *
- * @param[in] vm the pointer that points to VM data structure
- * @param[in] gpa the specified guest-physical address
- *
- * @retval hpa the host physical address mapping to the \p gpa
- * @retval INVALID_HPA the HPA of parameter gpa is unmapping
- */
-uint64_t gpa2hpa(struct acrn_vm *vm, uint64_t gpa);
-/**
- * @brief Translating from guest-physical address to host-physcial address
- *
- * @param[in] vm the pointer that points to VM data structure
- * @param[in] gpa the specified guest-physical address
- * @param[out] size the pointer that returns the page size of
- *                  the page in which the gpa is
- *
- * @retval hpa the host physical address mapping to the \p gpa
- * @retval INVALID_HPA the HPA of parameter gpa is unmapping
- */
-uint64_t local_gpa2hpa(struct acrn_vm *vm, uint64_t gpa, uint32_t *size);
 /**
  * @brief Translating from host-physical address to guest-physical address for Service VM
  *
