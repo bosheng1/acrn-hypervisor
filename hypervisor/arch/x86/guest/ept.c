@@ -274,14 +274,6 @@ void destroy_ept(struct acrn_vm *vm)
 	}
 }
 
-/**
- * @pre: the gpa and hpa are identical mapping in Service VM.
- */
-uint64_t service_vm_hpa2gpa(uint64_t hpa)
-{
-	return hpa;
-}
-
 int32_t ept_misconfig_vmexit_handler(__unused struct acrn_vcpu *vcpu)
 {
 	int32_t status;

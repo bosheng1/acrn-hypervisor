@@ -33,14 +33,6 @@ bool ept_is_valid_mr(struct acrn_vm *vm, uint64_t mr_base_gpa, uint64_t size);
  * @param[inout] vm the pointer that points to VM data structure
  */
 void destroy_ept(struct acrn_vm *vm);
-/**
- * @brief Translating from host-physical address to guest-physical address for Service VM
- *
- * @param[in] hpa the specified host-physical address
- *
- * @pre: the gpa and hpa are identical mapping in Service VM.
- */
-uint64_t service_vm_hpa2gpa(uint64_t hpa);
 
 /**
  * @brief Flush address space from the page entry

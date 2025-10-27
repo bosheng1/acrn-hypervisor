@@ -67,4 +67,13 @@ void stg2pt_modify_mr(struct acrn_vm *vm, uint64_t *toplvl_page,
  */
 void stg2pt_del_mr(struct acrn_vm *vm, uint64_t *toplvl_page, uint64_t gpa, uint64_t size);
 
+/**
+ * @brief Translating from host-physical address to guest-physical address for Service VM
+ *
+ * @param[in] hpa the specified host-physical address
+ *
+ * @pre: the gpa and hpa are identical mapping in Service VM.
+ */
+uint64_t service_vm_hpa2gpa(uint64_t hpa);
+
 #endif /* STAGE2_MM_H */

@@ -69,3 +69,12 @@ void stg2pt_del_mr(struct acrn_vm *vm, uint64_t *toplvl_page, uint64_t gpa, uint
 
 	stg2pt_flush_guest(vm);
 }
+
+
+/**
+ * @pre: the gpa and hpa are identical mapping in Service VM.
+ */
+uint64_t service_vm_hpa2gpa(uint64_t hpa)
+{
+       return hpa;
+}
