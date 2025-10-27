@@ -326,7 +326,7 @@ static int32_t read_ivshmem_vdev_cfg(struct pci_vdev *vdev, uint32_t offset, uin
  *   and the field base_gpa in the specified vBAR is not 0, it unregisters the mmio range handler for the BAR by calling
  *   unregister_mmio_emulation_handler().
  * - BAR2 maps the shared memory object. If the specified idx is 2 and the field base_gpa in vBAR2 is not 0, it releases
- *   the ept memory mapping for the shared memory region by calling ept_del_mr().
+ *   the ept memory mapping for the shared memory region by calling stg2pt_del_mr().
  * - Otherwise, it does nothing.
  *
  * @param[inout] vdev Pointer to the PCI device that is treated as an ivshmem device.
@@ -346,7 +346,7 @@ static void ivshmem_vbar_unmap(struct pci_vdev *vdev, uint32_t idx)
 	struct pci_vbar *vbar = &vdev->vbars[idx];
 
 	if ((idx == IVSHMEM_SHM_BAR) && (vbar->base_gpa != 0UL)) {
-		ept_del_mr(vm, (uint64_t *)vm->root_stg2ptp, vbar->base_gpa, vbar->size);
+		stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, vbar->base_gpa, vbar->size);
 	} else if (((idx == IVSHMEM_MMIO_BAR) || (idx == IVSHMEM_MSIX_BAR)) && (vbar->base_gpa != 0UL)) {
 		unregister_mmio_emulation_handler(vm, vbar->base_gpa, (vbar->base_gpa + vbar->size));
 	}
@@ -360,14 +360,14 @@ static void ivshmem_vbar_unmap(struct pci_vdev *vdev, uint32_t idx)
  *
  * - BAR0 is used for device registers. If the specified idx is 0 and the field base_gpa in the specified vBAR is not 0,
  *   it registers the mmio range handler (via the callback ivshmem_mmio_handler) for the BAR and deletes the 4KB ept
- *   memory mapping for the BAR by calling ept_del_mr().
+ *   memory mapping for the BAR by calling stg2pt_del_mr().
  * - BAR1 is used for MSI-X table and PBA. If the specified idx is 1 and the field base_gpa in the specified vBAR is not
  *   0, it registers the mmio range handler (via the callback vmsix_handle_table_mmio_access) for the BAR and deletes
- *   the ept memory mapping for the BAR by calling ept_del_mr(). It also sets the mmio_gpa field in the vdev->msix to
+ *   the ept memory mapping for the BAR by calling stg2pt_del_mr(). It also sets the mmio_gpa field in the vdev->msix to
  *   the GPA of the BAR for MSI-X table access.
  * - BAR2 maps the shared memory object. If the specified idx is 2, the field base_gpa in vBAR2 is not 0 and the field
  *   base_hpa in vBAR2 is not INVALID_HPA, it adds the ept memory mapping as (EPT_RD|EPT_WR|EPT_WB|EPT_IGNORE_PAT) for
- *   the BAR by calling ept_add_mr().
+ *   the BAR by calling stg2pt_add_mr().
  * - Otherwise, it does nothing.
  *
  * @param[inout] vdev Pointer to the PCI device that is treated as an ivshmem device.
@@ -388,16 +388,16 @@ static void ivshmem_vbar_map(struct pci_vdev *vdev, uint32_t idx)
 	struct pci_vbar *vbar = &vdev->vbars[idx];
 
 	if ((idx == IVSHMEM_SHM_BAR) && (vbar->base_hpa != INVALID_HPA) && (vbar->base_gpa != 0UL)) {
-		ept_add_mr(vm, (uint64_t *)vm->root_stg2ptp, vbar->base_hpa,
+		stg2pt_add_mr(vm, (uint64_t *)vm->root_stg2ptp, vbar->base_hpa,
 				vbar->base_gpa, vbar->size, EPT_RD | EPT_WR | EPT_WB | EPT_IGNORE_PAT);
 	} else if ((idx == IVSHMEM_MMIO_BAR) && (vbar->base_gpa != 0UL)) {
 		register_mmio_emulation_handler(vm, ivshmem_mmio_handler, vbar->base_gpa,
 				(vbar->base_gpa + vbar->size), vdev, false);
-		ept_del_mr(vm, (uint64_t *)vm->root_stg2ptp, vbar->base_gpa, round_page_up(vbar->size));
+		stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, vbar->base_gpa, round_page_up(vbar->size));
 	} else if ((idx == IVSHMEM_MSIX_BAR) && (vbar->base_gpa != 0UL)) {
 		register_mmio_emulation_handler(vm, vmsix_handle_table_mmio_access, vbar->base_gpa,
 			(vbar->base_gpa + vbar->size), vdev, false);
-		ept_del_mr(vm, (uint64_t *)vm->root_stg2ptp, vbar->base_gpa, vbar->size);
+		stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, vbar->base_gpa, vbar->size);
 		vdev->msix.mmio_gpa = vbar->base_gpa;
 	}
 }

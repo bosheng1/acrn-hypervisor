@@ -9,5 +9,6 @@
 
 #include <vm.h>
 void *arch_get_stg2ptp(struct acrn_vm *vm);
+void arch_stg2pt_flush_guest(struct acrn_vm *vm);
 
 #endif /* STAGE2_H */

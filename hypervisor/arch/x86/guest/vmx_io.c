@@ -115,10 +115,10 @@ int32_t ept_violation_vmexit_handler(struct acrn_vcpu *vcpu)
 	if ((exit_qual & 0x4UL) != 0UL) {
 		/* TODO: check wehther the gpa is not a MMIO address. */
 		if (vcpu->arch.cur_context == NORMAL_WORLD) {
-			ept_modify_mr(vcpu->vm, (uint64_t *)vcpu->vm->root_stg2ptp,
+			stg2pt_modify_mr(vcpu->vm, (uint64_t *)vcpu->vm->root_stg2ptp,
 				gpa & PAGE_MASK, PAGE_SIZE, EPT_EXE, 0UL);
 		} else {
-			ept_modify_mr(vcpu->vm, (uint64_t *)vcpu->vm->arch_vm.sworld_eptp,
+			stg2pt_modify_mr(vcpu->vm, (uint64_t *)vcpu->vm->arch_vm.sworld_eptp,
 				gpa & PAGE_MASK, PAGE_SIZE, EPT_EXE, 0UL);
 		}
 		vcpu_retain_rip(vcpu);

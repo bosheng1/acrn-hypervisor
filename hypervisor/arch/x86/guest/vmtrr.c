@@ -160,7 +160,7 @@ static void update_ept(struct acrn_vm *vm, uint64_t start,
 		break;
 	}
 
-	ept_modify_mr(vm, (uint64_t *)vm->root_stg2ptp, start, size, attr, EPT_MT_MASK);
+	stg2pt_modify_mr(vm, (uint64_t *)vm->root_stg2ptp, start, size, attr, EPT_MT_MASK);
 }
 
 static void update_ept_mem_type(const struct acrn_vmtrr *vmtrr)

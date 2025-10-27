@@ -546,7 +546,7 @@ vioapic_init(struct acrn_vm *vm)
 
 		register_mmio_emulation_handler(vm, vioapic_mmio_access_handler, (uint64_t)vioapic->chipinfo.addr,
 					(uint64_t)vioapic->chipinfo.addr + VIOAPIC_SIZE, (void *)vioapic, false);
-		ept_del_mr(vm, (uint64_t *)vm->root_stg2ptp, (uint64_t)vioapic->chipinfo.addr, VIOAPIC_SIZE);
+		stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, (uint64_t)vioapic->chipinfo.addr, VIOAPIC_SIZE);
 	}
 
 	/*

@@ -660,7 +660,7 @@ static void add_vm_memory_region(struct acrn_vm *vm, struct acrn_vm *target_vm,
 	}
 
 	/* create gpa to hpa EPT mapping */
-	ept_add_mr(target_vm, pml4_page, hpa, region->gpa, region->size, prot);
+	stg2pt_add_mr(target_vm, pml4_page, hpa, region->gpa, region->size, prot);
 }
 
 /**
@@ -683,7 +683,7 @@ static int32_t set_vm_memory_region(struct acrn_vm *vm,
 			}
 		} else {
 			if (ept_is_valid_mr(target_vm, region->gpa, region->size)) {
-				ept_del_mr(target_vm, pml4_page, region->gpa, region->size);
+				stg2pt_del_mr(target_vm, pml4_page, region->gpa, region->size);
 				ret = 0;
 			}
 		}
@@ -774,7 +774,7 @@ static int32_t write_protect_page(struct acrn_vm *vm,const struct wp_data *wp)
 					prot_set = (wp->set != 0U) ? 0UL : EPT_WR;
 					prot_clr = (wp->set != 0U) ? EPT_WR : 0UL;
 
-					ept_modify_mr(vm, (uint64_t *)vm->root_stg2ptp,
+					stg2pt_modify_mr(vm, (uint64_t *)vm->root_stg2ptp,
 							wp->gpa, PAGE_SIZE, prot_set, prot_clr);
 					ret = 0;
 				}

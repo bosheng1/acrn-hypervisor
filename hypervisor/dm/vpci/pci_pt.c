@@ -215,7 +215,7 @@ void vdev_pt_map_msix(struct pci_vdev *vdev, bool hold_lock)
 		addr_hi = round_page_up(addr_hi);
 		register_mmio_emulation_handler(vm, pt_vmsix_handle_table_mmio_access,
 				addr_lo, addr_hi, vdev, hold_lock);
-		ept_del_mr(vm, (uint64_t *)vm->root_stg2ptp, addr_lo, addr_hi - addr_lo);
+		stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, addr_lo, addr_hi - addr_lo);
 		msix->mmio_gpa = vbar->base_gpa;
 	}
 }
@@ -231,7 +231,7 @@ static void vdev_pt_unmap_mem_vbar(struct pci_vdev *vdev, uint32_t idx)
 	if (vbar->base_gpa != 0UL) {
 		struct acrn_vm *vm = vpci2vm(vdev->vpci);
 
-		ept_del_mr(vm, (uint64_t *)(vm->root_stg2ptp),
+		stg2pt_del_mr(vm, (uint64_t *)(vm->root_stg2ptp),
 			vbar->base_gpa, /* GPA (old vbar) */
 			vbar->size);
 	}
@@ -252,7 +252,7 @@ static void vdev_pt_map_mem_vbar(struct pci_vdev *vdev, uint32_t idx)
 	if (vbar->base_gpa != 0UL) {
 		struct acrn_vm *vm = vpci2vm(vdev->vpci);
 
-		ept_add_mr(vm, (uint64_t *)(vm->root_stg2ptp),
+		stg2pt_add_mr(vm, (uint64_t *)(vm->root_stg2ptp),
 			vbar->base_hpa, /* HPA (pbar) */
 			vbar->base_gpa, /* GPA (new vbar) */
 			vbar->size,
@@ -582,7 +582,7 @@ void passthru_gpu_opregion(struct pci_vdev *vdev)
 	gpu_opregion_gpa = GPU_OPREGION_GPA;
 	gpu_asls_phys = pci_pdev_read_cfg(vdev->pdev->bdf, PCIR_ASLS_CTL, 4U);
 	gpu_opregion_hpa = gpu_asls_phys & PCIM_ASLS_OPREGION_MASK;
-	ept_add_mr(vpci2vm(vdev->vpci), vpci2vm(vdev->vpci)->root_stg2ptp,
+	stg2pt_add_mr(vpci2vm(vdev->vpci), vpci2vm(vdev->vpci)->root_stg2ptp,
 			gpu_opregion_hpa, gpu_opregion_gpa,
 			GPU_OPREGION_SIZE, EPT_RD | EPT_UNCACHED);
 	pci_vdev_write_vcfg(vdev, PCIR_ASLS_CTL, 4U, gpu_opregion_gpa | (gpu_asls_phys & ~PCIM_ASLS_OPREGION_MASK));

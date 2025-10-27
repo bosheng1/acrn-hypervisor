@@ -181,7 +181,7 @@ static void prepare_prelaunched_vm_memmap(struct acrn_vm *vm, const struct acrn_
 			if (is_software_sram_enabled() && (entry->baseaddr == PRE_RTVM_SW_SRAM_BASE_GPA) &&
 				((vm_config->guest_flags & GUEST_FLAG_RT) != 0U)){
 				/* pass through Software SRAM to pre-RTVM */
-				ept_add_mr(vm, (uint64_t *)vm->root_stg2ptp,
+				stg2pt_add_mr(vm, (uint64_t *)vm->root_stg2ptp,
 					get_software_sram_base(), PRE_RTVM_SW_SRAM_BASE_GPA,
 					get_software_sram_size(), EPT_RWX | EPT_WB);
 				continue;
@@ -212,11 +212,11 @@ static void prepare_prelaunched_vm_memmap(struct acrn_vm *vm, const struct acrn_
 			}
 
 			if (entry->type != E820_TYPE_RESERVED) {
-				ept_add_mr(vm, (uint64_t *)vm->root_stg2ptp, base_hpa, base_gpa,
+				stg2pt_add_mr(vm, (uint64_t *)vm->root_stg2ptp, base_hpa, base_gpa,
 						base_size, EPT_RWX | EPT_WB);
 			} else {
 				/* GPAs under 1MB are always backed by physical memory */
-				ept_add_mr(vm, (uint64_t *)vm->root_stg2ptp, base_hpa, base_gpa,
+				stg2pt_add_mr(vm, (uint64_t *)vm->root_stg2ptp, base_hpa, base_gpa,
 						base_size, EPT_RWX | EPT_UNCACHED);
 			}
 			remaining_entry_size -= base_size;
@@ -274,7 +274,7 @@ static void deny_pci_bar_access(struct acrn_vm *service_vm, const struct pci_pde
 					ASSERT((base & PAGE_MASK) != 0U, "%02x:%02x.%d bar[%d] 0x%lx, is not 4K aligned!",
 						pdev->bdf.bits.b, pdev->bdf.bits.d, pdev->bdf.bits.f, idx, base);
 					size =  round_page_up(size);
-					ept_del_mr(service_vm, pml4_page, base, size);
+					stg2pt_del_mr(service_vm, pml4_page, base, size);
 				}
 			}
 		}
@@ -341,13 +341,13 @@ static void prepare_service_vm_memmap(struct acrn_vm *vm)
 	}
 
 	/* create real ept map for [0, service_vm_high64_max_ram) with UC */
-	ept_add_mr(vm, pml4_page, 0UL, 0UL, service_vm_high64_max_ram, EPT_RWX | EPT_UNCACHED);
+	stg2pt_add_mr(vm, pml4_page, 0UL, 0UL, service_vm_high64_max_ram, EPT_RWX | EPT_UNCACHED);
 
 	/* update ram entries to WB attr */
 	for (i = 0U; i < entries_count; i++) {
 		entry = p_e820 + i;
 		if (entry->type == E820_TYPE_RAM) {
-			ept_modify_mr(vm, pml4_page, entry->baseaddr, entry->length, EPT_WB, EPT_MT_MASK);
+			stg2pt_modify_mr(vm, pml4_page, entry->baseaddr, entry->length, EPT_WB, EPT_MT_MASK);
 		}
 	}
 
@@ -357,20 +357,20 @@ static void prepare_service_vm_memmap(struct acrn_vm *vm)
 	 */
 	epc_secs = get_phys_epc();
 	for (i = 0U; (i < MAX_EPC_SECTIONS) && (epc_secs[i].size != 0UL); i++) {
-		ept_del_mr(vm, pml4_page, epc_secs[i].base, epc_secs[i].size);
+		stg2pt_del_mr(vm, pml4_page, epc_secs[i].base, epc_secs[i].size);
 	}
 
 	/* unmap hypervisor itself for safety
 	 * will cause EPT violation if Service VM accesses hv memory
 	 */
 	hv_hpa = hva2hpa((void *)(get_hv_image_base()));
-	ept_del_mr(vm, pml4_page, hv_hpa, get_hv_image_size());
+	stg2pt_del_mr(vm, pml4_page, hv_hpa, get_hv_image_size());
 	/* unmap prelaunch VM memory */
 	for (vm_id = 0U; vm_id < CONFIG_MAX_VM_NUM; vm_id++) {
 		vm_config = get_vm_config(vm_id);
 		if (vm_config->load_order == PRE_LAUNCHED_VM) {
 			for (i = 0; i < vm_config->memory.region_num; i++){
-				ept_del_mr(vm, pml4_page, vm_config->memory.host_regions[i].start_hpa, vm_config->memory.host_regions[i].size_hpa);
+				stg2pt_del_mr(vm, pml4_page, vm_config->memory.host_regions[i].start_hpa, vm_config->memory.host_regions[i].size_hpa);
 			}
 			/* Remove MMIO/IO bars of pre-launched VM's ptdev */
 			deny_pdevs(vm, vm_config->pci_devs, vm_config->pci_dev_num);
@@ -384,11 +384,11 @@ static void prepare_service_vm_memmap(struct acrn_vm *vm)
 	/* unmap AP trampoline code for security
 	 * This buffer is guaranteed to be page aligned.
 	 */
-	ept_del_mr(vm, pml4_page, get_trampoline_start16_paddr(), trampoline_memory_size);
+	stg2pt_del_mr(vm, pml4_page, get_trampoline_start16_paddr(), trampoline_memory_size);
 
 	/* unmap PCIe MMCONFIG region since it's owned by hypervisor */
 	pci_mmcfg = get_mmcfg_region();
-	ept_del_mr(vm, (uint64_t *)vm->root_stg2ptp, pci_mmcfg->address, get_pci_mmcfg_size(pci_mmcfg));
+	stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, pci_mmcfg->address, get_pci_mmcfg_size(pci_mmcfg));
 
 	if (is_software_sram_enabled()) {
 		/*
@@ -412,9 +412,9 @@ static void prepare_service_vm_memmap(struct acrn_vm *vm)
 		 *     - So memory type of Software SRAM regions in EPT shall be updated to EPT_WB.
 		 */
 #if (PRE_RTVM_SW_SRAM_MAX_SIZE > 0U)
-		ept_del_mr(vm, pml4_page, service_vm_hpa2gpa(get_software_sram_base()), PRE_RTVM_SW_SRAM_MAX_SIZE);
+		stg2pt_del_mr(vm, pml4_page, service_vm_hpa2gpa(get_software_sram_base()), PRE_RTVM_SW_SRAM_MAX_SIZE);
 #else
-		ept_modify_mr(vm, pml4_page, service_vm_hpa2gpa(get_software_sram_base()),
+		stg2pt_modify_mr(vm, pml4_page, service_vm_hpa2gpa(get_software_sram_base()),
 			get_software_sram_size(), EPT_WB, EPT_MT_MASK);
 #endif
 	}
@@ -424,7 +424,7 @@ static void prepare_service_vm_memmap(struct acrn_vm *vm)
 	 * IOMMU hardware resources, which is not expected, as IOMMU hardware is owned by hypervisor.
 	 */
 	for (i = 0U; i < plat_dmar_info.drhd_count; i++) {
-		ept_del_mr(vm, pml4_page, plat_dmar_info.drhd_units[i].reg_base_addr, PAGE_SIZE);
+		stg2pt_del_mr(vm, pml4_page, plat_dmar_info.drhd_units[i].reg_base_addr, PAGE_SIZE);
 	}
 
 }
@@ -438,7 +438,7 @@ static void prepare_epc_vm_memmap(struct acrn_vm *vm)
 	if (is_vsgx_supported(vm->vm_id)) {
 		vm_epc_maps = get_epc_mapping(vm->vm_id);
 		for (i = 0U; (i < MAX_EPC_SECTIONS) && (vm_epc_maps[i].size != 0UL); i++) {
-			ept_add_mr(vm, (uint64_t *)vm->root_stg2ptp, vm_epc_maps[i].hpa,
+			stg2pt_add_mr(vm, (uint64_t *)vm->root_stg2ptp, vm_epc_maps[i].hpa,
 				vm_epc_maps[i].gpa, vm_epc_maps[i].size, EPT_RWX | EPT_WB);
 		}
 	}
@@ -480,7 +480,7 @@ void prepare_vm_identical_memmap(struct acrn_vm *vm, uint16_t e820_entry_type, u
 	for (i = 0U; i < entries_count; i++) {
 		entry = p_e820 + i;
 		if (entry->type == e820_entry_type) {
-			ept_add_mr(vm, pml4_page, entry->baseaddr,
+			stg2pt_add_mr(vm, pml4_page, entry->baseaddr,
 				entry->baseaddr, entry->length,
 				prot_orig);
 		}
@@ -542,7 +542,7 @@ int32_t arch_init_vm(struct acrn_vm *vm, struct acrn_vm_config *vm_config)
 
 			if (vm_idx >= 0)
 			{
-				ept_add_mr(vm, (uint64_t *)vm->root_stg2ptp,
+				stg2pt_add_mr(vm, (uint64_t *)vm->root_stg2ptp,
 					hva2hpa(post_user_vm_sworld_memory[vm_idx]),
 					TRUSTY_EPT_REBASE_GPA, TRUSTY_RAM_SIZE, EPT_WB | EPT_RWX);
 			} else {

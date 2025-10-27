@@ -62,13 +62,13 @@ static void create_secure_world_ept(struct acrn_vm *vm, uint64_t gpa_orig,
 	hpa = gpa2hpa(vm, gpa_orig);
 
 	/* Unmap gpa_orig~gpa_orig+size from guest normal world ept mapping */
-	ept_del_mr(vm, (uint64_t *)vm->root_stg2ptp, gpa_orig, size);
+	stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, gpa_orig, size);
 
 	vm->arch_vm.sworld_eptp = pgtable_create_trusty_root(&vm->stg2_pgtable,
 					vm->root_stg2ptp, EPT_RWX, EPT_EXE);
 
 	/* Map [gpa_rebased, gpa_rebased + size) to secure ept mapping */
-	ept_add_mr(vm, (uint64_t *)vm->arch_vm.sworld_eptp, hpa, gpa_rebased, size, EPT_RWX | EPT_WB);
+	stg2pt_add_mr(vm, (uint64_t *)vm->arch_vm.sworld_eptp, hpa, gpa_rebased, size, EPT_RWX | EPT_WB);
 
 	/* Backup secure world info, will be used when destroy secure world and suspend User VM */
 	vm->arch_vm.sworld_control.sworld_memory.base_gpa_in_user_vm = gpa_orig;
@@ -90,11 +90,11 @@ void destroy_secure_world(struct acrn_vm *vm, bool need_clr_mem)
 			post_user_access();
 		}
 
-		ept_del_mr(vm, vm->arch_vm.sworld_eptp, gpa_user_vm, size);
+		stg2pt_del_mr(vm, vm->arch_vm.sworld_eptp, gpa_user_vm, size);
 		vm->arch_vm.sworld_eptp = NULL;
 
 		/* Restore memory to guest normal world */
-		ept_add_mr(vm, vm->root_stg2ptp, hpa, gpa_user_vm, size, EPT_RWX | EPT_WB);
+		stg2pt_add_mr(vm, vm->root_stg2ptp, hpa, gpa_user_vm, size, EPT_RWX | EPT_WB);
 	} else {
 		pr_err("sworld eptp is NULL, it's not created");
 	}

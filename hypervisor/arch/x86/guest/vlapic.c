@@ -2193,11 +2193,11 @@ void vlapic_create(struct acrn_vcpu *vcpu, uint16_t pcpu_id)
 			(uint64_t *)vcpu->vm->root_stg2ptp;
 		/* only need unmap it from Service VM as User VM never mapped it */
 		if (is_service_vm(vcpu->vm)) {
-			ept_del_mr(vcpu->vm, pml4_page,
+			stg2pt_del_mr(vcpu->vm, pml4_page,
 				DEFAULT_APIC_BASE, PAGE_SIZE);
 		}
 
-		ept_add_mr(vcpu->vm, pml4_page,
+		stg2pt_add_mr(vcpu->vm, pml4_page,
 			vlapic_apicv_get_apic_access_addr(),
 			DEFAULT_APIC_BASE, PAGE_SIZE,
 			EPT_WR | EPT_RD | EPT_UNCACHED);

@@ -41,49 +41,6 @@ void destroy_ept(struct acrn_vm *vm);
  * @pre: the gpa and hpa are identical mapping in Service VM.
  */
 uint64_t service_vm_hpa2gpa(uint64_t hpa);
-/**
- * @brief Guest-physical memory region mapping
- *
- * @param[in] vm the pointer that points to VM data structure
- * @param[in] pml4_page The physical address of The EPTP
- * @param[in] hpa The specified start host physical address of host
- *                physical memory region that GPA will be mapped
- * @param[in] gpa The specified start guest physical address of guest
- *                physical memory region that needs to be mapped
- * @param[in] size The size of guest physical memory region that needs
- *                 to be mapped
- * @param[in] prot_orig The specified memory access right and memory type
- */
-void ept_add_mr(struct acrn_vm *vm, uint64_t *pml4_page, uint64_t hpa,
-		uint64_t gpa, uint64_t size, uint64_t prot_orig);
-/**
- * @brief Guest-physical memory page access right or memory type updating
- *
- * @param[in] vm the pointer that points to VM data structure
- * @param[in] pml4_page The physical address of The EPTP
- * @param[in] gpa The specified start guest physical address of guest
- *            physical memory region whoes mapping needs to be updated
- * @param[in] size The size of guest physical memory region
- * @param[in] prot_set The specified memory access right and memory type
- *                     that will be set
- * @param[in] prot_clr The specified memory access right and memory type
- *                     that will be cleared
- */
-void ept_modify_mr(struct acrn_vm *vm, uint64_t *pml4_page, uint64_t gpa,
-		uint64_t size, uint64_t prot_set, uint64_t prot_clr);
-/**
- * @brief Guest-physical memory region unmapping
- *
- * @param[in] vm the pointer that points to VM data structure
- * @param[in] pml4_page The physical address of The EPTP
- * @param[in] gpa The specified start guest physical address of guest
- *                physical memory region whoes mapping needs to be deleted
- * @param[in] size The size of guest physical memory region
- *
- * @pre [gpa,gpa+size) has been mapped into host physical memory region
- */
-void ept_del_mr(struct acrn_vm *vm, uint64_t *pml4_page, uint64_t gpa,
-		uint64_t size);
 
 /**
  * @brief Flush address space from the page entry

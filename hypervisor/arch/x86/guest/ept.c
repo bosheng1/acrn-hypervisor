@@ -18,7 +18,6 @@
 #include <asm/rtct.h>
 #include <stg2_mm.h>
 
-#define DBG_LEVEL_EPT	6U
 
 /* EPT address space will not beyond the platform physical address space */
 #define EPT_PML4_PAGE_NUM	PML4_PAGE_NUM(MAX_PHY_ADDRESS_SPACE)
@@ -303,7 +302,7 @@ int32_t ept_misconfig_vmexit_handler(__unused struct acrn_vcpu *vcpu)
 	return status;
 }
 
-static inline void ept_flush_guest(struct acrn_vm *vm)
+void arch_stg2pt_flush_guest(struct acrn_vm *vm)
 {
 	uint16_t i;
 	struct acrn_vcpu *vcpu;
@@ -311,55 +310,6 @@ static inline void ept_flush_guest(struct acrn_vm *vm)
 	foreach_vcpu(i, vm, vcpu) {
 		vcpu_make_request(vcpu, ACRN_REQUEST_EPT_FLUSH);
 	}
-}
-
-void ept_add_mr(struct acrn_vm *vm, uint64_t *pml4_page,
-	uint64_t hpa, uint64_t gpa, uint64_t size, uint64_t prot_orig)
-{
-	uint64_t prot = prot_orig;
-
-	dev_dbg(DBG_LEVEL_EPT, "%s, vm[%d] hpa: 0x%016lx gpa: 0x%016lx size: 0x%016lx prot: 0x%016x\n",
-			__func__, vm->vm_id, hpa, gpa, size, prot);
-
-	spinlock_obtain(&vm->stg2pt_lock);
-
-	pgtable_add_map(pml4_page, hpa, gpa, size, prot, &vm->stg2_pgtable);
-
-	spinlock_release(&vm->stg2pt_lock);
-
-	ept_flush_guest(vm);
-}
-
-void ept_modify_mr(struct acrn_vm *vm, uint64_t *pml4_page,
-		uint64_t gpa, uint64_t size,
-		uint64_t prot_set, uint64_t prot_clr)
-{
-	uint64_t local_prot = prot_set;
-
-	dev_dbg(DBG_LEVEL_EPT, "%s,vm[%d] gpa 0x%lx size 0x%lx\n", __func__, vm->vm_id, gpa, size);
-
-	spinlock_obtain(&vm->stg2pt_lock);
-
-	pgtable_modify_or_del_map(pml4_page, gpa, size, local_prot, prot_clr, &(vm->stg2_pgtable), MR_MODIFY);
-
-	spinlock_release(&vm->stg2pt_lock);
-
-	ept_flush_guest(vm);
-}
-/**
- * @pre [gpa,gpa+size) has been mapped into host physical memory region
- */
-void ept_del_mr(struct acrn_vm *vm, uint64_t *pml4_page, uint64_t gpa, uint64_t size)
-{
-	dev_dbg(DBG_LEVEL_EPT, "%s,vm[%d] gpa 0x%lx size 0x%lx\n", __func__, vm->vm_id, gpa, size);
-
-	spinlock_obtain(&vm->stg2pt_lock);
-
-	pgtable_modify_or_del_map(pml4_page, gpa, size, 0UL, 0UL, &(vm->stg2_pgtable), MR_DEL);
-
-	spinlock_release(&vm->stg2pt_lock);
-
-	ept_flush_guest(vm);
 }
 
 /**
