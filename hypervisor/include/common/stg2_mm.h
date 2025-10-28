@@ -76,4 +76,16 @@ void stg2pt_del_mr(struct acrn_vm *vm, uint64_t *toplvl_page, uint64_t gpa, uint
  */
 uint64_t service_vm_hpa2gpa(uint64_t hpa);
 
+/**
+ * @brief Check if the GPA range is guest valid GPA or not
+ *
+ * @param[in] vm the pointer that points to VM data structure
+ * @param[in] mr_base_gpa The specified start guest physical address of guest
+ *                        physical memory region
+ * @param[in] size The size of guest physical memory region
+ *
+ * @retval true if the GPA range is guest valid GPA, false otherwise.
+ */
+bool stg2pt_is_valid_mr(struct acrn_vm *vm, uint64_t mr_base_gpa, uint64_t size);
+
 #endif /* STAGE2_MM_H */

@@ -676,13 +676,13 @@ static int32_t set_vm_memory_region(struct acrn_vm *vm,
 		pml4_page = (uint64_t *)target_vm->root_stg2ptp;
 		if (region->type == MR_ADD) {
 			/* if the GPA range is Service VM valid GPA or not */
-			if (ept_is_valid_mr(vm, region->service_vm_gpa, region->size)) {
+			if (stg2pt_is_valid_mr(vm, region->service_vm_gpa, region->size)) {
 				/* FIXME: how to filter the alias mapping ? */
 				add_vm_memory_region(vm, target_vm, region, pml4_page);
 				ret = 0;
 			}
 		} else {
-			if (ept_is_valid_mr(target_vm, region->gpa, region->size)) {
+			if (stg2pt_is_valid_mr(target_vm, region->gpa, region->size)) {
 				stg2pt_del_mr(target_vm, pml4_page, region->gpa, region->size);
 				ret = 0;
 			}
@@ -753,7 +753,7 @@ static int32_t write_protect_page(struct acrn_vm *vm,const struct wp_data *wp)
 
 	if (is_severity_pass(vm->vm_id)) {
 		if ((!mem_aligned_check(wp->gpa, PAGE_SIZE)) ||
-				(!ept_is_valid_mr(vm, wp->gpa, PAGE_SIZE))) {
+				(!stg2pt_is_valid_mr(vm, wp->gpa, PAGE_SIZE))) {
 			pr_err("%s,vm[%hu] gpa 0x%lx,GPA is invalid or not page size aligned.",
 					__func__, vm->vm_id, wp->gpa);
 		} else {

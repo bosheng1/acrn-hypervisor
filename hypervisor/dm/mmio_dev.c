@@ -46,7 +46,7 @@ int32_t deassign_mmio_dev(struct acrn_vm *vm, const struct acrn_mmiodev *mmiodev
 	for (i = 0; i < MMIODEV_RES_NUM; i++) {
 		res = &mmiodev->res[i];
 		gpa = is_service_vm(vm) ? res->host_pa : res->user_vm_pa;
-		if (ept_is_valid_mr(vm, gpa, res->size)) {
+		if (stg2pt_is_valid_mr(vm, gpa, res->size)) {
 			if (mem_aligned_check(gpa, PAGE_SIZE) &&
 				mem_aligned_check(res->size, PAGE_SIZE)) {
 				stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, gpa, res->size);

@@ -8,6 +8,7 @@
 #include <vm.h>
 #include <mmu.h>
 #include <logmsg.h>
+#include <stg2_mm.h>
 
 #define DBG_LEVEL_STG2P	6U
 
@@ -77,4 +78,32 @@ void stg2pt_del_mr(struct acrn_vm *vm, uint64_t *toplvl_page, uint64_t gpa, uint
 uint64_t service_vm_hpa2gpa(uint64_t hpa)
 {
        return hpa;
+}
+
+/*
+ * For x86, to enable the identical map and support of legacy devices/ACPI method in Service VM,
+ * ACRN presents the entire host 0-4GB memory region to Service VM, except the memory
+ * regions explicitly assigned to pre-launched VMs or HV (DRAM and MMIO). However,
+ * virtual e820 only contains the known DRAM regions. For this reason,
+ * we can't know if the GPA range is guest valid or not, by checking with
+ * its ve820 tables only.
+ *
+ * instead, we Check if the GPA range is guest valid by whether the GPA range is mapped
+ * in EPT pagetable or not
+ */
+bool stg2pt_is_valid_mr(struct acrn_vm *vm, uint64_t mr_base_gpa, uint64_t mr_size)
+{
+       bool present = true;
+       uint32_t sz;
+       uint64_t end = mr_base_gpa + mr_size, address = mr_base_gpa;
+
+       while (address < end) {
+               if (local_gpa2hpa(vm, address, &sz) == INVALID_HPA) {
+                       present = false;
+                       break;
+               }
+               address += sz;
+       }
+
+       return present;
 }
