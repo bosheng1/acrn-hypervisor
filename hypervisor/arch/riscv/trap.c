@@ -11,6 +11,8 @@
 #include <asm/irq.h>
 #include <asm/timer.h>
 #include <asm/trap.h>
+#include <asm/guest/vcpu_exit.h>
+#include <vcpu.h>
 #include <cpu.h>
 #include <logmsg.h>
 #include <notify.h>
@@ -33,7 +35,7 @@ static void s_sw_irq_handler(void)
 	handle_smp_call();
 }
 
-static void dispatch_exception(const struct intr_excp_ctx *ctx)
+static void dispatch_exception(struct intr_excp_ctx *ctx)
 {
 	uint16_t pcpu_id = get_pcpu_id();
 
@@ -56,7 +58,7 @@ static void dispatch_exception(const struct intr_excp_ctx *ctx)
  * TODO: add support for handler registration via request_irq() and
  *       further adoption of the common IRQ framework.
  */
-static void dispatch_interrupt(const struct intr_excp_ctx *ctx)
+void dispatch_interrupt(const struct intr_excp_ctx *ctx)
 {
 	uint64_t trap_cause = ctx->regs.cause & (~TRAP_CAUSE_INTERRUPT_BITMASK);
 
@@ -76,9 +78,12 @@ static void dispatch_interrupt(const struct intr_excp_ctx *ctx)
 	do_softirq();
 }
 
-void dispatch_trap(const struct intr_excp_ctx *ctx)
+void dispatch_trap(struct intr_excp_ctx *ctx, uint64_t hstatus)
 {
-	if ((ctx->regs.cause & TRAP_CAUSE_INTERRUPT_BITMASK) == 0UL) {
+	if (is_trap_from_vmode(hstatus)) {
+		/* ctx is undefined in this case, don't use it */
+		dispatch_vcpu_trap();
+	} else if ((ctx->regs.cause & TRAP_CAUSE_INTERRUPT_BITMASK) == 0UL) {
 		dispatch_exception(ctx);
 	} else {
 		dispatch_interrupt(ctx);
