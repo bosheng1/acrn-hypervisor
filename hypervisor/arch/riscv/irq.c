@@ -27,6 +27,12 @@ static void init_interrupt_arch(__unused uint16_t pcpu_id)
 	 */
 	cpu_csr_write(CSR_STVEC, (addr | TRAP_VECTOR_MODE_DIRECT));
 	cpu_csr_write(CSR_SIE, (IP_IE_SSI | IP_IE_STI | IP_IE_SEI));
+
+	/* sscratch holds the value used by save/restore routine.
+	 * sscratch == 0: save/restore to per-cpu stack (hs-mode trap handling)
+	 * sscratch != 0: save/restore to vcpu struct (v-mode trap handling)
+	 */
+	cpu_csr_write(CSR_SSCRATCH, 0ULL);
 }
 
 /*
