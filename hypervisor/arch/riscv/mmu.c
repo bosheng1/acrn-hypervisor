@@ -10,6 +10,7 @@
 #include <logmsg.h>
 #include <reloc.h>
 #include <fdt_api.h>
+#include <acrn_hv_defs.h>
 
 void set_paging_supervisor(__unused uint64_t base, __unused uint64_t size)
 {
@@ -157,12 +158,16 @@ static void init_hv_mapping(void)
 		PAGE_V | PAGE_R | PAGE_W,
 		&ppt_pgtable);
 
+	/* Maps all physical memory */
+	pgtable_add_map((uint64_t *)ppt_mmu_top_addr, phys_mem_start,
+		phys_mem_start, phys_mem_size,
+		PAGE_V | PAGE_R | PAGE_W,
+		&ppt_pgtable);
+
 	/*TODO: Only map PAGE_X for text section*/
 	hva_base = get_hv_image_base();
-	pgtable_add_map((uint64_t *)ppt_mmu_top_addr, hva_base,
-		hva_base, get_hv_image_size(),
-		PAGE_V | PAGE_X | PAGE_R | PAGE_W,
-		&ppt_pgtable);
+	pgtable_modify_or_del_map((uint64_t *)ppt_mmu_top_addr, hva_base,
+		get_hv_image_size(), PAGE_X, 0UL, &ppt_pgtable, MR_MODIFY);
 
 	init_satp = ((uint64_t)ppt_mmu_top_addr >> PAGE_SHIFT) | SATP_MODE_SV48;
 	if (!switch_satp(init_satp)) {
