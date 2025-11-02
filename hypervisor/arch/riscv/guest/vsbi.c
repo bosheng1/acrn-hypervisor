@@ -75,10 +75,12 @@ extern const struct acrn_vsbi_extension vsbi_ext_base;
 extern const struct acrn_vsbi_extension vsbi_ext_hsm;
 extern const struct acrn_vsbi_extension vsbi_ext_srst;
 extern const struct acrn_vsbi_extension vsbi_ext_acrn;
+extern const struct acrn_vsbi_extension vsbi_ext_dbcn;
 static const struct acrn_vsbi_extension *vsbi_extensions[] = {
 	&vsbi_ext_base,
 	&vsbi_ext_hsm,
 	&vsbi_ext_srst,
+	&vsbi_ext_dbcn,
 };
 
 void init_vsbi(struct acrn_vm *vm)

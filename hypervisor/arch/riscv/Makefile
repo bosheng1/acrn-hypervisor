@@ -76,6 +76,7 @@ VP_C_SRCS += arch/riscv/guest/vsbi_base.c
 VP_C_SRCS += arch/riscv/guest/vsbi_hsm.c
 VP_C_SRCS += arch/riscv/guest/vsbi_srst.c
 VP_C_SRCS += arch/riscv/guest/vsbi_acrn.c
+VP_C_SRCS += arch/riscv/guest/vsbi_dbcn.c
 
 VM_CFG_C_SRCS += $(SCENARIO_CFG_DIR)/vm_configurations.c
 VM_CFG_C_SRCS += $(BOARD_CFG_DIR)/pci_dev.c
