@@ -100,6 +100,7 @@ int32_t arch_init_vm(struct acrn_vm *vm, struct acrn_vm_config *vm_config)
 	arch_prepare_vm_memmap(vm);
 	create_vm_memmap(vm);
 	(void)vm_config;
+	vplic_init(vm);
 
 	return 0;
 }
@@ -118,6 +119,7 @@ int32_t arch_reset_vm(struct acrn_vm *vm)
 	foreach_vcpu(i, vm, vcpu) {
 		reset_vcpu(vcpu);
 	}
+	vplic_reset(vm);
 	return 0;
 }
 
