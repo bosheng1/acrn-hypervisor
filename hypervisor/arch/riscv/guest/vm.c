@@ -91,8 +91,10 @@ void arch_vm_prepare_bsp(struct acrn_vcpu *vcpu)
 	vcpu->arch.regs.a1 = (uint64_t)vm->sw.fdt_info.load_addr;
 }
 
-void arch_trigger_level_intr(__unused struct acrn_vm *vm,
-			__unused uint32_t irq, __unused bool assert) {}
+void arch_trigger_level_intr(struct acrn_vm *vm, uint32_t irq, bool assert)
+{
+	vplic_accept_intr(vm, irq, assert);
+}
 
 static void fdt_set_hart_isa_str_all(void *fdt, const char *isa_str)
 {
