@@ -22,6 +22,7 @@ RANGE_DB = {
     'IOAPIC_LINES':{'min':1,'max':120},
     'PCI_DEV_NUM':{'min':1,'max':1024},
     'MSIX_TABLE_NUM':{'min':1,'max':2048},
+    'PLIC_SOURCES':{'min':1,'max':1023},
 }
 
 

@@ -59,6 +59,7 @@ class CapHv:
         self.max_ioapic_lines = acrn_config_utilities.get_hv_item_tag(self.hv_file, "CAPACITIES", "MAX_IOAPIC_LINES")
         self.max_pci_dev_num = acrn_config_utilities.get_hv_item_tag(self.hv_file, "CAPACITIES", "MAX_PCI_DEV_NUM")
         self.max_msix_table_num = acrn_config_utilities.get_hv_item_tag(self.hv_file, "CAPACITIES", "MAX_MSIX_TABLE_NUM")
+        self.max_plic_sources = acrn_config_utilities.get_hv_item_tag(self.hv_file, "CAPACITIES", "MAX_PLIC_SOURCES")
 
     def check_item(self):
         hv_cfg_lib.hv_range_check(self.max_emu_mmio_regions, "CAPACITIES", "MAX_EMULATED_MMIO", hv_cfg_lib.RANGE_DB['EMULATED_MMIO_REGIONS'])
@@ -67,6 +68,7 @@ class CapHv:
         hv_cfg_lib.hv_range_check(self.max_ioapic_lines, "CAPACITIES", "MAX_IOAPIC_LINES", hv_cfg_lib.RANGE_DB['IOAPIC_LINES'])
         hv_cfg_lib.hv_range_check(self.max_pci_dev_num, "CAPACITIES", "MAX_PCI_DEV_NUM", hv_cfg_lib.RANGE_DB['PCI_DEV_NUM'])
         hv_cfg_lib.max_msix_table_num_check(self.max_msix_table_num, "CAPACITIES", "MAX_MSIX_TABLE_NUM")
+        hv_cfg_lib.max_plic_sources_check(self.max_plic_sources, "CAPACITIES", "PLIC_SOURCES")
 
 class Features:
     def __init__(self, hv_file):
