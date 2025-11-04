@@ -108,6 +108,7 @@ def get_capacities(hv_info, config):
     print("CONFIG_MAX_PCI_DEV_NUM={}".format(hv_info.cap.max_pci_dev_num), file=config)
     print("CONFIG_MAX_IOAPIC_LINES={}".format(hv_info.cap.max_ioapic_lines), file=config)
     print("CONFIG_MAX_PT_IRQ_ENTRIES={}".format(hv_info.cap.max_pt_irq_entries), file=config)
+    print("CONFIG_MAX_PLIC_SOURCES={}".format(hv_info.cap.max_plic_sources), file=config)
     max_msix_table_num = 0
     if not hv_info.cap.max_msix_table_num:
         native_max_msix_line = board_cfg_lib.get_info(acrn_config_utilities.BOARD_INFO_FILE, "<MAX_MSIX_TABLE_NUM>", "</MAX_MSIX_TABLE_NUM>")

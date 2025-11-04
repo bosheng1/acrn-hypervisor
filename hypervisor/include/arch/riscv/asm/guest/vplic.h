@@ -13,12 +13,13 @@
 #include <asm/plicbase.h>
 #include <asm/page.h>
 #include <spinlock.h>
+#include <config.h>
 
 #define HVIP_VSEIP              10U
 #define IRQ_S_MODE              9U
 #define VPLIC_BASE              0x0C000000U
 #define VPLIC_SIZE              0x04000000U
-#define VPLIC_MAX_NUM_SOURCE    256
+#define VPLIC_MAX_NUM_SOURCE    CONFIG_MAX_PLIC_SOURCES
 #define VPLIC_MAX_PRIORITY      7U
 
 #define PLIC_MAX_NUM_FIELDS     ((PLIC_MAX_SOURCES + 31U) / 32U)

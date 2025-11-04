@@ -314,6 +314,20 @@ If your VM is not a security VM, leave this option unchecked. </xs:documentation
         </xs:restriction>
       </xs:simpleType>
     </xs:element>
+    <xs:element name="MAX_PLIC_SOURCES" default="256">
+      <xs:annotation acrn:views="">
+        <xs:documentation>Maximum number of interrupt sources per PLIC.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+         <xs:annotation>
+           <xs:documentation>Integer from 1 to 1023.</xs:documentation>
+         </xs:annotation>
+        <xs:restriction base="xs:integer">
+          <xs:minInclusive value="1" />
+          <xs:maxInclusive value="1023" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:element>
     <xs:element name="MAX_EMULATED_MMIO" default="16">
         <xs:annotation acrn:title="Max emulated MMIO regions" acrn:views="advanced"
                        acrn:errormsg="'required': 'must config the max number of emulated MMIO regions'">
