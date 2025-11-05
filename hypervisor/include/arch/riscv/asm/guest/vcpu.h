@@ -13,6 +13,9 @@
 #ifndef ASSEMBLER
 
 #define RISCV_VCPU_REQUEST_EXCEPTION		0U
+#define RISCV_VCPU_REQUEST_EVENT		1U
+
+#define RISCV_VCPU_EVENT_VIRTUAL_INTERRUPT	0U
 
 struct riscv_vcpu_guest_ctx {
 	uint64_t vsstatus;
@@ -66,6 +69,9 @@ struct acrn_vcpu_arch {
 	bool context_updated;
 
 	struct riscv_vcpu_trap_info trap;
+	uint64_t irqs_pending;
+	uint64_t irqs_pending_mask;
+
 } __aligned(PAGE_SIZE);
 
 struct acrn_vcpu;
