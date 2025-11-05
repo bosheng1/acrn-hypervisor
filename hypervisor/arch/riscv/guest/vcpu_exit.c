@@ -17,6 +17,7 @@
 #include <asm/trap.h>
 #include <asm/guest/vcpu_priv.h>
 #include <asm/guest/vsbi.h>
+#include <asm/guest/vio.h>
 
 int32_t vcpu_virtual_inst_fault_handler(struct acrn_vcpu *vcpu) {
 	/* TODO: to be implemented */
@@ -54,6 +55,10 @@ int32_t vcpu_exit_handler(struct acrn_vcpu *vcpu)
 				break;
 			case TRAP_CAUSE_EXC_VIRTUAL_INST_FAULT:
 				ret = vcpu_virtual_inst_fault_handler(vcpu);
+				break;
+			case TRAP_CAUSE_EXC_STORE_GUEST_PAGE_FAULT:
+			case TRAP_CAUSE_EXC_LOAD_GUEST_PAGE_FAULT:
+				ret = mmio_inst_fault_handler(vcpu);
 				break;
 			default:
 				ret = -EINVAL;

@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <logmsg.h>
 #include <sbuf.h>
+#include <asm/guest/instr_emul.h>
 
 #define DBG_LEVEL_IOREQ	6U
 

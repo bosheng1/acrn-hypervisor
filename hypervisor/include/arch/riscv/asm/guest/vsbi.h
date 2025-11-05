@@ -25,6 +25,8 @@ struct vsbi_ret {
 	bool vcpu_retain_pc;
 };
 
+struct acrn_vcpu;
+
 struct acrn_vsbi_extension {
 	const char *name;
 	uint64_t eid_start;
