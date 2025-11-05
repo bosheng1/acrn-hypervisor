@@ -20,6 +20,18 @@
 #include <asm/guest/vsbi.h>
 #include <asm/guest/virq.h>
 
+uint64_t vcpu_get_gpcsr(struct acrn_vcpu *vcpu, uint32_t idx)
+{
+	struct cpu_regs *r = &(vcpu->arch.regs);
+	return *((uint64_t*)r + idx);
+}
+
+void vcpu_set_gpcsr(struct acrn_vcpu *vcpu, uint32_t idx, uint64_t val)
+{
+	struct cpu_regs *r = &(vcpu->arch.regs);
+	*((uint64_t*)r + idx) = val;
+}
+
 void vcpu_set_epc(struct acrn_vcpu *vcpu, uint64_t val)
 {
 	struct cpu_regs *r = &(vcpu->arch.regs);

@@ -9,6 +9,8 @@
 
 #include <types.h>
 #include <errno.h>
+#include <asm/cpu.h>
+#include <asm/page.h>
 
 #ifndef ASSEMBLER
 

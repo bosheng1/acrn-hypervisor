@@ -8,6 +8,8 @@
 #define RISCV_VCPU_PRIV_H
 
 /* arch internal API */
+uint64_t vcpu_get_gpcsr(struct acrn_vcpu *vcpu, uint32_t idx);
+void vcpu_set_gpcsr(struct acrn_vcpu *vcpu, uint32_t idx, uint64_t val);
 void vcpu_set_epc(struct acrn_vcpu *vcpu, uint64_t val);
 void load_vcpu(struct acrn_vcpu *vcpu);
 void unload_vcpu(struct acrn_vcpu *vcpu);
