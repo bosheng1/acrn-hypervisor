@@ -13,6 +13,7 @@
 #include <cpu.h>
 
 #define IPI_NOTIFY_CPU		0
+#define EXCEPTION_INVALID	0x7fffffffffffffffUL
 
 struct intr_excp_ctx {
 	struct cpu_regs regs;
