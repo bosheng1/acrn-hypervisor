@@ -32,6 +32,25 @@ static void load_rawimage(struct acrn_vm *vm)
 	(void)copy_to_gpa(vm, sw_kernel->kernel_src_addr, kernel_load_gpa, sw_kernel->kernel_size);
 
 	sw_kernel->kernel_entry_addr = (void *)vm_config->os_config.kernel_entry_addr;
+
+	if (vm->sw.ramdisk_info.src_addr != NULL) {
+		if (is_service_vm(vm)) {
+			/*
+			 * For Service VM we assume that the initrd will be placed in a place that
+			 * does not overlap with pre-launched VM region. If that is the case, then
+			 * we do not need to move initrd around.
+			 *
+			 * TODO: Move initrd when it actually overlaps with pre-launched VM mem regions
+			 */
+			vm->sw.ramdisk_info.load_addr = vm->sw.ramdisk_info.src_addr;
+		} else {
+			/* TODO: Find proper space using find_space_from_vm_vfdt API
+			 * For now put initrd just after kernel
+			 */
+			vm->sw.ramdisk_info.load_addr = (void *)round_page_up(kernel_load_gpa + \
+					sw_kernel->kernel_size);
+		}
+	}
 }
 
 int32_t rawimage_loader(struct acrn_vm *vm)

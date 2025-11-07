@@ -11,6 +11,27 @@
 #include <vfdt.h>
 #include <fdt_api.h>
 
+static void init_vm_vfdt_common(struct acrn_vm *vm)
+{
+	void *fdt = vm->arch_vm.fdt_raw;
+	uint64_t ramdisk_start, ramdisk_end;
+	struct acrn_vm_config *vm_config = get_vm_config(vm->vm_id);
+
+	if (vm_config->os_config.bootargs[0] != '\0') {
+		fdt_set_kernel_bootargs(fdt, vm_config->os_config.bootargs);
+	}
+
+	if (vm->sw.ramdisk_info.load_addr != NULL) {
+		ramdisk_start = (uint64_t)vm->sw.ramdisk_info.load_addr;
+		ramdisk_end = ramdisk_start + (uint64_t)vm->sw.ramdisk_info.size;
+		fdt_set_initrd_mem_range(fdt, ramdisk_start, ramdisk_end);
+	}
+
+	vm->sw.fdt_info.src_addr = fdt;
+	vm->sw.fdt_info.size = fdt_totalsize(fdt);
+	/* load addr is initialized in image loader */
+}
+
 void init_service_vm_vfdt(struct acrn_vm *vm)
 {
 	uint8_t *fdt = vm->arch_vm.fdt_raw;
@@ -44,7 +65,5 @@ void init_service_vm_vfdt(struct acrn_vm *vm)
 
 	arch_init_service_vm_vfdt(vm);
 
-	vm->sw.fdt_info.src_addr = fdt;
-	vm->sw.fdt_info.size = fdt_totalsize(fdt);
-	/* load addr is initialized in image loader */
+	init_vm_vfdt_common(vm);
 }
