@@ -48,7 +48,7 @@ int32_t copy_from_gpa(struct acrn_vm *vm, void *h_ptr, uint64_t gpa, uint32_t si
 {
 	/* TODO: dummy implementation */
 	(void)vm;
-	memcpy(h_ptr, (void *)gpa, size);
+	memmove(h_ptr, (void *)gpa, size);
 	return 0;
 }
 
@@ -56,7 +56,7 @@ int32_t copy_to_gpa(struct acrn_vm *vm, void *h_ptr, uint64_t gpa, uint32_t size
 {
 	/* TODO: dummy implementation */
 	(void)vm;
-	memcpy((void *)gpa, h_ptr, size);
+	memmove((void *)gpa, h_ptr, size);
 	return 0;
 }
 
