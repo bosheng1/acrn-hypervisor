@@ -201,6 +201,16 @@ int fdt_set_initrd_mem_range(void *fdt, uint64_t gva_start, uint64_t initrd_size
 	return ret;
 }
 
+int fdt_remove_node_by_path(void *fdt, const char *path)
+{
+	int node, ret = 0;
+	node = fdt_path_offset(fdt, path);
+	if (node > 0) {
+		ret = fdt_del_node(fdt, node);
+	}
+	return ret;
+}
+
 void init_devtree(uint64_t fdt_paddr)
 {
 	void *fdt = hpa2hva_early(fdt_paddr);

@@ -47,6 +47,10 @@ void init_service_vm_vfdt(struct acrn_vm *vm)
 
 	/* Remove hv owned devices */
 	/* TODO: to be implemented */
+	/* for now remove serial device directly */
+	if (fdt_remove_node_by_path(fdt, "/soc/serial") < 0) {
+		pr_err("Failed to remove serial device from Service VM vfdt");
+	}
 
 	/* Reserve pre-launched VM mem range */
 	for (vm_id = 0; vm_id < CONFIG_MAX_VM_NUM; vm_id++) {
