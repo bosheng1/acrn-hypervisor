@@ -54,15 +54,15 @@
       <kern_type>KERNEL_RAWIMAGE</kern_type>
       <kern_mod>Pre_bzImage</kern_mod>
       <!-- gpa. This needs to match the dtb on where the memory starts. -->
-      <kern_load_addr>0xa0000000</kern_load_addr>
-      <kern_entry_addr>0xa0000000</kern_entry_addr>
+      <kern_load_addr>0xa1000000</kern_load_addr>
+      <kern_entry_addr>0xa1000000</kern_entry_addr>
       <ramdisk_mod/>
       <bootargs></bootargs>
     </os_config>
     <memory>
       <hpa_region>
         <start_hpa>0xb0000000</start_hpa>
-        <size_hpa>1024</size_hpa>
+        <size_hpa>3584</size_hpa>
       </hpa_region>
     </memory>
     <cpu_affinity>

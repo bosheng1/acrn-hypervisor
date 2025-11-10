@@ -142,7 +142,7 @@ ff71b000-ffffffff : System RAM
         </AVAILABLE_IRQ_INFO>
   <!-- Add memory range to pass xmlschema check -->
   <memory>
-        <range start="0x80060000" end="0x100000000" size="2147090432"/>
+        <range start="0x80000000" end="0x280000000" size="8589934592"/>
   </memory>
   <TOTAL_MEM_INFO>
         4038724 kB
