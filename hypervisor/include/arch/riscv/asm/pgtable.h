@@ -62,7 +62,10 @@
 #define PAGE_ATTRIBUTES_MASK  		(PAGE_CONF_MASK | PAGE_ATTR_MASK)
 
 #define DEFINE_PAGE_TABLES(name, nr)					\
-pgtable_t __aligned(PAGE_SIZE) name[PG_TABLE_ENTRIES * (nr)]
+pgtable_t __aligned(PAGE_SIZE) name[nr]
+
+#define DEFINE_16K_PAGE_TABLES(name, nr)					\
+pgtable_16k_t name[nr]
 
 #define DEFINE_PAGE_TABLE(name) DEFINE_PAGE_TABLES(name, 1)
 
@@ -108,7 +111,12 @@ struct page {
 	uint8_t contents[PAGE_SIZE];
 } __aligned(PAGE_SIZE);
 
-typedef uint64_t pgtable_t;
+struct four_page {
+	uint8_t contents[PAGE_SIZE*4];
+} __aligned(PAGE_SIZE*4);
+
+typedef struct page pgtable_t;
+typedef struct four_page pgtable_16k_t;
 
 /*
  * Memory Type
