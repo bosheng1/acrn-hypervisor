@@ -71,7 +71,7 @@ void init_phys_mem_range(void)
 DEFINE_PAGE_TABLES(ppt_pages, PPT_PAGE_NUM);
 DEFINE_PAGE_TABLE(ppt_pages_bitmap);
 
-static bool large_page_support(enum _page_table_level level, uint64_t __unused prot)
+bool large_page_support(enum _page_table_level level, uint64_t __unused prot)
 {
 	if (level == PGT_LVL1|| level == PGT_LVL2)
 		return true;
@@ -83,12 +83,12 @@ static void ppt_flush_cache_pagewalk(const void* entry __attribute__((unused)))
 {
 }
 
-static uint64_t ppt_pgentry_present(uint64_t pte)
+uint64_t pgentry_present_helper(uint64_t pte)
 {
 	return pte & PAGE_V;
 }
 
-static inline void ppt_set_pgentry(uint64_t *pte, uint64_t page, uint64_t prot, enum _page_table_level __unused level,
+void set_pgentry_helper(uint64_t *pte, uint64_t page, uint64_t prot, enum _page_table_level __unused level,
 		bool is_leaf, const struct pgtable *table)
 {
 	uint64_t prot_tmp;
@@ -103,9 +103,9 @@ static inline void ppt_set_pgentry(uint64_t *pte, uint64_t page, uint64_t prot, 
 static const struct pgtable ppt_pgtable = {
 	.pool = &ppt_page_pool,
 	.large_page_support = large_page_support,
-	.pgentry_present = ppt_pgentry_present,
+	.pgentry_present = pgentry_present_helper,
 	.flush_cache_pagewalk = ppt_flush_cache_pagewalk,
-	.set_pgentry = ppt_set_pgentry,
+	.set_pgentry = set_pgentry_helper,
 };
 
 /* TODO: need to formally get the value either from
