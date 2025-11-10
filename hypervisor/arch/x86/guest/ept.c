@@ -393,3 +393,8 @@ void walk_ept_table(struct acrn_vm *vm, pge_handler cb)
 		}
 	}
 }
+
+uint64_t arch_get_stage2_pfn(uint64_t pgentry)
+{
+	return (pgentry & (~STAGE2_PFN_HIGH_MASK));
+}

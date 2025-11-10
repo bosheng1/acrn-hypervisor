@@ -93,7 +93,6 @@ pgtable_16k_t name[nr]
 #define PFN_MASK PTE_PFN_MASK
 
 #define PPT_PFN_HIGH_MASK		0xFFFF000000000000UL
-#define INVALID_HPA			(0x1UL << 52U)
 
 #ifndef __ASSEMBLY__
 

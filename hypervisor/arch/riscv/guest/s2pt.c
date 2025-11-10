@@ -33,3 +33,11 @@ void arch_init_s2pt(struct pgtable *table, void **s2ptp, struct vm_arch *arch_vm
 
 	arch_vm->hgatp = SATP_MODE_SV48 | ((uint64_t)vm_id << STAGE2_VMID_OFFSET) | ((uint64_t)*s2ptp >> PAGE_SHIFT);
 }
+void arch_stg2pt_flush_guest(struct acrn_vm __unused *vm)
+{
+}
+
+uint64_t arch_get_stage2_pfn(uint64_t pgentry)
+{
+	return (((pgentry & (~STAGE2_PFN_HIGH_MASK))>>PAGE_PFN_OFFSET)<<PAGE_SHIFT);
+}

@@ -14,5 +14,7 @@ static inline void flush_guest_gtlb_local(void)           \
                 : : : "memory");        \
 }
 
+
+
 #endif /* S2PT_H */
 

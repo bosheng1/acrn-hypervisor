@@ -13,6 +13,11 @@
 #include <logmsg.h>
 #include <cpu.h>
 
+static uint64_t get_stage2_pfn(uint64_t pgentry)
+{
+	return arch_get_stage2_pfn(pgentry);
+}
+
 /**
  * @pre: vm != NULL.
  */
@@ -27,7 +32,7 @@ uint64_t local_gpa2hpa(struct acrn_vm *vm, uint64_t gpa, uint32_t *size)
 	stg2ptp = get_stg2ptp(vm);
 	pgentry = pgtable_lookup_entry((uint64_t *)stg2ptp, gpa, &pg_size, &vm->stg2_pgtable);
 	if (pgentry != NULL) {
-		hpa = (((*pgentry & (~STAGE2_PFN_HIGH_MASK)) & (~(pg_size - 1UL)))
+		hpa = ((get_stage2_pfn(*pgentry) & (~(pg_size - 1UL)))
 				| (gpa & (pg_size - 1UL)));
 	}
 

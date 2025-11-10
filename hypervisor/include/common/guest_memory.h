@@ -27,6 +27,7 @@ enum vm_paging_mode {
 	PAGING_MODE_NUM,
 };
 
+uint64_t arch_get_stage2_pfn(uint64_t pgentry);
 /*
  * VM related APIs
  */
