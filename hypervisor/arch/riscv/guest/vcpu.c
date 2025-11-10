@@ -19,6 +19,7 @@
 #include <asm/guest/vcpu_priv.h>
 #include <asm/guest/vsbi.h>
 #include <asm/guest/virq.h>
+#include <asm/guest/s2pt.h>
 
 uint64_t vcpu_get_gpcsr(struct acrn_vcpu *vcpu, uint32_t idx)
 {
@@ -159,6 +160,8 @@ int32_t arch_init_vcpu(struct acrn_vcpu *vcpu)
 	/* Delegate VS interrupts */
 	hctx->hideleg = HIDELEG_DEFAULT;
 
+	/* program stage2 memory translation */
+	hctx->hgatp = vcpu->vm->arch_vm.hgatp;
 	/*
 	 * SPVP & SPV: sret to vs mode
 	 */
@@ -183,6 +186,7 @@ void arch_vcpu_thread(struct thread_object *obj)
 	struct cpu_regs *regs = &(vcpu->arch.regs);
 
 	load_vcpu(vcpu);
+	flush_guest_gtlb_local();
 
 	/* let strap_return load general context from vcpu struct */
 	cpu_csr_write(CSR_SSCRATCH, (uint64_t)regs);
@@ -223,6 +227,7 @@ void arch_context_switch_in(struct thread_object *next)
 {
 	struct acrn_vcpu *vcpu = container_of(next, struct acrn_vcpu, thread_obj);
 	load_vcpu(vcpu);
+	flush_guest_gtlb_local();
 }
 
 uint64_t arch_build_stack_frame(struct acrn_vcpu *vcpu)
