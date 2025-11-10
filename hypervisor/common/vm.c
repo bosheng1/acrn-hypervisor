@@ -14,6 +14,7 @@
 #include <sprintf.h>
 #include <asm/notify.h>
 #include <host_pm.h>
+#include <stg2_mm.h>
 
 static struct acrn_vm vm_array[CONFIG_MAX_VM_NUM] __aligned(PAGE_SIZE);
 
@@ -382,10 +383,10 @@ int32_t create_vm(uint16_t vm_id, uint64_t pcpu_bitmap, struct acrn_vm_config *v
 		vm->sw.is_polling_ioreq = true;
 	}
 
-	spinlock_init(&vm->stg2pt_lock);
 	spinlock_init(&vm->emul_mmio_lock);
 	vm->nr_emul_mmio_regions = 0U;
 
+	init_stg2_mm(vm);
 	/* TODO: Some logic inside arch_init_vm can also be moved to common but
 	 * we didn't come up with abstraction good enough to capture dependencies. Leave those
 	 * inside arch for now. */

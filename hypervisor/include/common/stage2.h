@@ -10,5 +10,5 @@
 #include <vm.h>
 void *arch_get_stg2ptp(struct acrn_vm *vm);
 void arch_stg2pt_flush_guest(struct acrn_vm *vm);
-
+void arch_init_s2pt(struct pgtable *table, void **s2ptp, struct vm_arch *arch_vm, uint16_t vm_id);
 #endif /* STAGE2_H */

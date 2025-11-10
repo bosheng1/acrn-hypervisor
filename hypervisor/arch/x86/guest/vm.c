@@ -524,10 +524,6 @@ int32_t arch_init_vm(struct acrn_vm *vm, struct acrn_vm_config *vm_config)
 	security_vm_fixup(vm_id);
 #endif
 
-	/* TODO: Move this to common when guest memory is implemented */
-	init_ept_pgtable(&vm->stg2_pgtable, vm->vm_id);
-	vm->root_stg2ptp = pgtable_create_root(&vm->stg2_pgtable);
-
 	if (is_service_vm(vm)) {
 		/* Only for Service VM */
 		create_service_vm_e820(vm);

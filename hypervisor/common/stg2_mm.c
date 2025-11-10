@@ -8,13 +8,18 @@
 #include <vm.h>
 #include <mmu.h>
 #include <logmsg.h>
-#include <stg2_mm.h>
+#include <guest_memory.h>
 
 #define DBG_LEVEL_STG2P	6U
 
+
 void *get_stg2ptp(struct acrn_vm *vm)
 {
+#ifdef HAS_ARCH_GET_STG2PTP
 	return arch_get_stg2ptp(vm);
+#else
+	return vm->root_stg2ptp;
+#endif
 }
 
 static void stg2pt_flush_guest(struct acrn_vm *vm)
@@ -106,4 +111,10 @@ bool stg2pt_is_valid_mr(struct acrn_vm *vm, uint64_t mr_base_gpa, uint64_t mr_si
        }
 
        return present;
+}
+
+void init_stg2_mm(struct acrn_vm *vm)
+{
+	spinlock_init(&vm->stg2pt_lock);
+	arch_init_s2pt(&vm->stg2_pgtable, &vm->root_stg2ptp, &vm->arch_vm, vm->vm_id);
 }

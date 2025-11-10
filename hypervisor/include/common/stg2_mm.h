@@ -88,4 +88,6 @@ uint64_t service_vm_hpa2gpa(uint64_t hpa);
  */
 bool stg2pt_is_valid_mr(struct acrn_vm *vm, uint64_t mr_base_gpa, uint64_t size);
 
+void init_stg2_mm(struct acrn_vm *vm);
+
 #endif /* STAGE2_MM_H */

@@ -204,7 +204,7 @@ static inline void ept_normal_set_pgentry(uint64_t *pte, uint64_t page, uint64_t
 	make_pgentry(pte, page, prot_tmp, table);
 }
 
-void init_ept_pgtable(struct pgtable *table, uint16_t vm_id)
+void arch_init_s2pt(struct pgtable *table, void **s2ptp, uint16_t vm_id)
 {
 	struct acrn_vm *vm = get_vm_from_vmid(vm_id);
 
@@ -232,6 +232,9 @@ void init_ept_pgtable(struct pgtable *table, uint16_t vm_id)
 	} else {
 		table->set_pgentry = ept_normal_set_pgentry;
 	}
+
+	*s2ptp = (uint64_t *)alloc_page(table->pool);
+
 }
 
 void destroy_ept(struct acrn_vm *vm)
@@ -319,6 +322,7 @@ void ept_flush_leaf_page(uint64_t *pge, uint64_t size)
 	}
 }
 
+#define HAS_ARCH_GET_STG2PTP
 /**
  * @pre: vm != NULL.
  */
