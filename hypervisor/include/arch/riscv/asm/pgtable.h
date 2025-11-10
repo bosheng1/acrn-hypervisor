@@ -71,6 +71,7 @@ pgtable_16k_t name[nr]
 
 #define PTE_PFN_MASK   			0x3FFFFFFFFFFC00UL
 #define PAGE_BASE_OFFSET 		10UL
+#define STAGE2_VMID_OFFSET              44UL
 
 /* for Sv48, vpn0 shift is 12 */
 #define PTE_SHIFT			(PAGE_SHIFT)
