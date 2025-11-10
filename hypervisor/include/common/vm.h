@@ -74,6 +74,20 @@ enum vm_state {
 	VM_PAUSED,	/* VM paused */
 };
 
+enum operation_type
+{
+	MAP = 1,
+	DELETE,
+	UNUSED
+};
+
+struct mmap_entry{
+	uint64_t gpa;
+	uint64_t len;
+	uint64_t map_attribute;
+	enum operation_type op_type;
+};
+
 struct acrn_vm {
 	struct vm_arch arch_vm; /* Reference to this VM's arch information */
 	struct vm_hw_info hw;	/* Reference to this VM's HW information */
@@ -100,6 +114,9 @@ struct acrn_vm {
 	void *root_stg2ptp;
 	struct pgtable stg2_pgtable;
 	spinlock_t stg2pt_lock;	/* Spin-lock used to protect stg2pt to add/modify/remove for a VM */
+	/* common memory layout structure */
+	struct mmap_entry vm_mmap_entry[3];
+	int vm_mamp_entry_num;
 } __aligned(PAGE_SIZE);
 
 /*
@@ -211,6 +228,9 @@ void start_vm(struct acrn_vm *vm);
 void pause_vm(struct acrn_vm *vm);
 int32_t destroy_vm(struct acrn_vm *vm);
 int32_t reset_vm(struct acrn_vm *vm);
+void arch_prepare_vm_memmap(struct acrn_vm *vm);
+void create_vm_memmap(struct acrn_vm *vm);
+void register_mmap_entry(struct acrn_vm *vm, uint64_t gpa, uint64_t len, uint64_t map_attribute, enum operation_type type);
 
 #endif /* !ASSEMBLER */
 

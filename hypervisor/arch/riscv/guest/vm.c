@@ -49,15 +49,57 @@ struct acrn_vcpu *vcpu_from_vhartid(struct acrn_vm *vm, uint32_t vhartid)
 	return vcpu;
 }
 
+static inline uint64_t calculate_memory_size(struct vm_hpa_regions *regions, uint64_t num)
+{
+	uint64_t i;
+	uint64_t size = 0;
+	for(i = 0; i < num; i++) {
+		size += regions[i].size_hpa;
+	}
+
+	return size;
+}
+
+#define SERVICE_VM_MAX_GPA  0x280000000   //0x100000000
+/*TODO: hard code memory entry here, need to generate common entry data from virtual memory map, eg. dts */
+void arch_prepare_vm_memmap(struct acrn_vm *vm)
+{
+	struct acrn_vm_config *vm_config = get_vm_config(vm->vm_id);
+
+	if (is_service_vm(vm)) {
+		uint64_t hv_hpa, hv_size;
+		init_service_vm_vfdt(vm);
+		register_mmap_entry(vm, 0, SERVICE_VM_MAX_GPA, PAGE_V | PAGE_R | PAGE_W | PAGE_U | PAGE_X, MAP);
+
+		hv_hpa = hva2hpa((void *)(get_hv_image_base()));
+		hv_size = get_hv_image_size();
+		register_mmap_entry(vm, hv_hpa, hv_size, 0, DELETE);
+
+		for (uint16_t vmid = 0; vmid < CONFIG_MAX_VM_NUM; vmid++) {
+			vm_config = get_vm_config(vmid);
+			if (vm_config->load_order == PRE_LAUNCHED_VM) {
+				for (uint16_t i = 0; i < vm_config->memory.region_num; i++) {
+
+					register_mmap_entry(vm, vm_config->memory.host_regions[i].start_hpa, vm_config->memory.host_regions[i].size_hpa, 0, DELETE);
+				}
+			}
+		}
+
+	} else if (vm_config->load_order == PRE_LAUNCHED_VM) {
+		uint64_t memory_size = calculate_memory_size(vm_config->memory.host_regions, vm_config->memory.region_num);
+		register_mmap_entry(vm, 0, memory_size, PAGE_V | PAGE_R | PAGE_W | PAGE_U | PAGE_X, MAP);
+
+	} else if (vm_config->load_order == POST_LAUNCHED_VM) {
+
+	}
+}
+
 int32_t arch_init_vm(struct acrn_vm *vm, struct acrn_vm_config *vm_config)
 {
 	init_vsbi(vm);
-
+	arch_prepare_vm_memmap(vm);
+	create_vm_memmap(vm);
 	(void)vm_config;
-
-	if (is_service_vm(vm)) {
-		init_service_vm_vfdt(vm);
-	}
 
 	return 0;
 }

@@ -470,3 +470,76 @@ void shutdown_vm_from_idle(uint16_t pcpu_id)
 		bitmap_clear_non_atomic(vm_id, vms);
 	}
 }
+
+void register_mmap_entry(struct acrn_vm *vm, uint64_t gpa, uint64_t len, uint64_t map_attribute, enum operation_type type)
+{
+	int indx = vm->vm_mamp_entry_num;
+	vm->vm_mmap_entry[indx].gpa = gpa;
+	vm->vm_mmap_entry[indx].len = len;
+	vm->vm_mmap_entry[indx].map_attribute = map_attribute;
+	vm->vm_mmap_entry[indx].op_type = type;
+	vm->vm_mamp_entry_num += 1;
+}
+
+/*FIXME: need to process mapping between multiple segments of gpa and hpa */
+void map_address_segement(struct acrn_vm *vm, int en, struct vm_hpa_regions **regions, uint64_t region_num)
+{
+	uint64_t base_hpa;
+	uint64_t base_gpa;
+	uint64_t remaining_entry_size;
+	uint32_t hpa_index;
+	uint64_t base_size;
+	struct vm_hpa_regions tmp_vm_hpa;
+	struct mmap_entry *entry;
+
+	hpa_index = 0U;
+	tmp_vm_hpa = *regions[0];
+
+	entry = &vm->vm_mmap_entry[en];
+
+	base_gpa = entry->gpa;
+	remaining_entry_size = entry->len;
+
+	while ((hpa_index < region_num) && (remaining_entry_size > 0)) {
+
+		base_hpa = tmp_vm_hpa.start_hpa;
+		base_size = min(remaining_entry_size, tmp_vm_hpa.size_hpa);
+
+		if (tmp_vm_hpa.size_hpa > remaining_entry_size) {
+			tmp_vm_hpa.start_hpa  += base_size;
+			tmp_vm_hpa.size_hpa -= base_size;
+		} else {
+			hpa_index++;
+			if (hpa_index < region_num) {
+				tmp_vm_hpa = *regions[hpa_index];
+			}
+		}
+
+		stg2pt_add_mr(vm, (uint64_t *)vm->root_stg2ptp, base_hpa, base_gpa,
+				base_size, entry->map_attribute);
+
+		remaining_entry_size -= base_size;
+		base_gpa += base_size;
+	}
+
+}
+
+void create_vm_memmap(struct acrn_vm *vm)
+{
+	for(int i = 0; i < vm->vm_mamp_entry_num; i++) {
+		struct mmap_entry *entry = &vm->vm_mmap_entry[i];
+		if(entry->op_type == MAP) {
+			if(is_service_vm(vm)) {
+				stg2pt_add_mr(vm, (uint64_t *)vm->root_stg2ptp, 0, entry->gpa,
+						entry->len, entry->map_attribute);
+
+			} else {
+				map_address_segement(vm, i, &(get_vm_config(vm->vm_id)->memory.host_regions),
+						get_vm_config(vm->vm_id)->memory.region_num);
+			}
+
+		} else if(entry->op_type == DELETE){
+			stg2pt_del_mr(vm, (uint64_t *)vm->root_stg2ptp, entry->gpa, entry->len);
+		}
+	}
+}
