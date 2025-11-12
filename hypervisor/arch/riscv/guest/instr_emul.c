@@ -33,7 +33,7 @@
 #define BIT8_MASK		0xff
 
 /* TODO: why only ins32 here? Shall we emulate ins64 too? */
-int32_t emulate_ins32(struct acrn_vcpu *vcpu, uint32_t ins, uint32_t size)
+int32_t emulate_ins32(struct acrn_vcpu *vcpu, uint32_t ins)
 {
 	struct acrn_mmio_request *mmio_req = &vcpu->req.reqs.mmio_request;
 	uint32_t reg_idx, op;
@@ -41,6 +41,7 @@ int32_t emulate_ins32(struct acrn_vcpu *vcpu, uint32_t ins, uint32_t size)
 	uint64_t mask;
 	uint64_t pc = vcpu->arch.regs.epc;
 	int32_t rc = 0;
+	uint32_t size = (ins & INS32_OPSIZE_MASK) >> 12;
 
 	ASSERT((ins != 0), "ins 0x%x is not valid!", ins);
 
@@ -96,16 +97,15 @@ int32_t emulate_ins32(struct acrn_vcpu *vcpu, uint32_t ins, uint32_t size)
 
 int32_t emulate_instruction(struct acrn_vcpu *vcpu)
 {
-	uint32_t ins, size, ret = -EINVAL;
+	uint32_t ins, ret = -EINVAL;
 
 	ins = vcpu->arch.hctx.htinst;
-	size = vcpu->req.reqs.mmio_request.size;
 
 	switch (ins & 0x3) {
 		/* TODO: we suppose the htinst should have valid value but not 0 */
 		case 0x1:
 		case 0x3:
-			ret = emulate_ins32(vcpu, ins, size);
+			ret = emulate_ins32(vcpu, ins);
 			break;
 		default:
 			break;
