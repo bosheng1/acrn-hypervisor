@@ -85,7 +85,7 @@
   <xsl:variable name="maxcpus">
     <xsl:choose>
       <xsl:when test="$maxcpunum != 0">
-        <xsl:value-of select="concat('maxcpus=', $maxcpunum)" />
+        <xsl:value-of select="concat('maxcpus=', 2)" />
       </xsl:when>
       <xsl:otherwise>
         <xsl:value-of select="''" />
