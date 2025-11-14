@@ -48,5 +48,6 @@ struct acrn_vplic {
 void vplic_init(struct acrn_vm *vm);
 void vplic_reset(struct acrn_vm *vm);
 void vplic_accept_intr(struct acrn_vm *vm, uint32_t irq, bool assert);
+int fdt_parse_plic_info(void *fdt, struct plic_info *plic);
 
 #endif /* __RISCV_VPLIC_H__ */

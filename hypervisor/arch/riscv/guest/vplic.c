@@ -19,6 +19,7 @@
 #include <logmsg.h>
 #include <asm/guest/vplic.h>
 #include <asm/guest/virq.h>
+#include <fdt_api.h>
 
 #define VPLIC_VERBOS	0
 #define DBG_LEVEL_VPLIC	6U
@@ -347,6 +348,108 @@ void vplic_reset(struct acrn_vm *vm)
 
         regs = &(vplic->regs);
         memset((void *)regs, 0U, sizeof(struct plic_regs));
+}
+
+static int fdt_find_plic_node(void *fdt) {
+	int node = -1;
+
+	node = fdt_node_offset_by_compatible(fdt, -1, "sifive,plic-1.0.0");
+	if (node < 0) {
+		node = fdt_node_offset_by_compatible(fdt, -1, "riscv,plic0");
+	}
+	return node;
+}
+
+int fdt_parse_plic_info(void *fdt, struct plic_info *plic)
+{
+	int plic_node, node, cpu_node, len;
+	uint32_t num_entries, index;
+	const fdt32_t *prop = NULL;
+	uint32_t context_num = 0;
+	int address_cells = 2;
+	int size_cells = 2;
+	int ret = 0;
+
+	plic_node = fdt_find_plic_node(fdt);
+	if (plic_node >= 0) {
+		/* get max priority */
+		prop = fdt_getprop(fdt, plic_node, "riscv,max-priority", &len);
+		if (prop != NULL) {
+			plic->max_priority = fdt32_to_cpu(*prop);
+		} else {
+			plic->max_priority = 7; /* default max priority */
+		}
+		/* get number of sources */
+		prop = fdt_getprop(fdt, plic_node, "riscv,ndev", &len);
+		if (prop != NULL) {
+			plic->source_num = fdt32_to_cpu(*prop);
+		} else {
+			ret = -EINVAL;
+		}
+		/* get context info */
+		prop = fdt_getprop(fdt, plic_node, "interrupts-extended", &len);
+		if (prop != NULL && len > 0) {
+			num_entries = len / (2 * sizeof(fdt32_t));
+			if (num_entries > PLIC_VM_MAX_CONTEXTS) {
+				num_entries = PLIC_VM_MAX_CONTEXTS;
+			}
+			for (index = 0; index < num_entries; index++) {
+				node = fdt_node_offset_by_phandle(fdt, fdt32_to_cpu(prop[2 * index]));
+				if (node >= 0) {
+					uint32_t hwirq = fdt32_to_cpu(prop[2 * index + 1]);
+					uint32_t hart_id = 0;
+					cpu_node = fdt_parent_offset(fdt, node);
+					if (cpu_node >= 0) {
+						const fdt32_t *reg_prop = fdt_getprop(fdt, cpu_node, "reg", &len);
+						if (reg_prop != NULL) {
+							hart_id = fdt32_to_cpu(*reg_prop);
+							plic->contexts[context_num].hartid = hart_id;
+							plic->contexts[context_num].parent_hwirq = hwirq;
+							context_num++;
+						}
+					}
+				}
+			}
+		}
+		if (context_num == 0) {
+			ret = -EINVAL;
+		}
+		plic->context_num = context_num;
+
+		/* get plic base address and size */
+		prop = fdt_getprop(fdt, plic_node, "reg", &len);
+		int node = fdt_parent_offset(fdt, plic_node);
+		if (node >= 0) {
+			const fdt32_t *cells_prop;
+			cells_prop = fdt_getprop(fdt, node, "#address-cells", NULL);
+			if (cells_prop) {
+				address_cells = fdt32_to_cpu(*cells_prop);
+			}
+			cells_prop = fdt_getprop(fdt, node, "#size-cells", NULL);
+			if (cells_prop) {
+				size_cells = fdt32_to_cpu(*cells_prop);
+			}
+		}
+		if (address_cells == 2 && size_cells == 2) {
+			if (len == 16) {
+				const fdt64_t *prop64 = (const fdt64_t *)prop;
+				plic->base = fdt64_to_cpu(prop64[0]);
+				plic->size = fdt64_to_cpu(prop64[1]);
+			} else {
+				ret = -EINVAL;
+			}
+		} else if (address_cells == 1 && size_cells == 1) {
+			if (len == 8) {
+				plic->base = fdt32_to_cpu(prop[0]);
+				plic->size = fdt32_to_cpu(prop[1]);
+			} else {
+				ret = -EINVAL;
+			}
+		} else {
+			ret = -EINVAL;
+		}
+	}
+	return ret;
 }
 
 static void init_plic_info(struct acrn_vm *vm, struct plic_info *info)
