@@ -41,6 +41,7 @@ struct acrn_vplic {
 	uint32_t pending_base;
 	uint32_t enable_base;
 	uint32_t context_base;
+	bool asserted[PLIC_VM_MAX_CONTEXTS];
 };
 
 void vplic_init(struct acrn_vm *vm);
