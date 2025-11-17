@@ -167,9 +167,15 @@ static void vplic_update_context(struct acrn_vplic *vplic, uint32_t context_id)
 		vcpu = vcpu_from_vhartid(vplic->vm, vplic->info.contexts[context_id].hartid);
 		deliverable_irq = vplic_get_deliverable_irq(vplic, context_id);
 		if (deliverable_irq != 0U) {
-			vplic_vcpu_intr_assert(vcpu);
+			if (!vplic->asserted[context_id]) {
+				vplic_vcpu_intr_assert(vcpu);
+				vplic->asserted[context_id] = true;
+			}
 		} else {
-			vplic_vcpu_intr_deassert(vcpu);
+			if (vplic->asserted[context_id]) {
+				vplic_vcpu_intr_deassert(vcpu);
+				vplic->asserted[context_id] = false;
+			}
 		}
 	}
 }
@@ -400,6 +406,9 @@ void vplic_init(struct acrn_vm *vm)
 	vplic->enable_base = PLIC_ENABLE_BASE;
 	vplic->context_base = PLIC_CONTEXT_BASE;
 	init_plic_info(vm, &vplic->info);
+	for (uint32_t i = 0; i < vplic->info.context_num; i++) {
+		vplic->asserted[i] = false;
+	}
 
 	register_mmio_emulation_handler(vm, vplic_access_handler, vplic->info.base,
 		vplic->info.base + vplic->info.size, (void *)vplic, false);
