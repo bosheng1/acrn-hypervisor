@@ -118,6 +118,7 @@ int32_t vcpu_clear_intr(struct acrn_vcpu *vcpu, uint32_t hwirq)
 	if (hwirq < BITS_PER_LONG) {
 		bitmap_clear(hwirq, &arch->irqs_pending);
 		bitmap_set(hwirq, &arch->irqs_pending_mask);
+		vcpu_make_request(vcpu, RISCV_VCPU_REQUEST_EVENT);
 		ret = 0;
 	}
 
