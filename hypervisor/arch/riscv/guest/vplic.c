@@ -131,6 +131,7 @@ static bool check_context_s_mode(struct acrn_vplic *vplic, uint32_t context_id)
 
 static void vplic_vcpu_intr_assert(struct acrn_vcpu *vcpu)
 {
+	pr_err("vplic inject vcpu ext intr");
 	vcpu_set_intr(vcpu, HVIP_VSEIP);
 }
 
