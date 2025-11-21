@@ -478,7 +478,7 @@ static int init_plic_info(struct acrn_vm *vm, struct plic_info *info)
 
 	memset(info, 0U, sizeof(struct plic_info));
 #ifdef CONFIG_FDT_PARSE_ENABLED
-	ret = fdt_parse_plic_info(vm_get_vfdt(vm), info);
+	ret = fdt_parse_plic_info(vm->arch_vm.fdt_raw, info);
 #else
 	/*
 	 * plic config is fetched from vm_config when fdt is not enabled,
