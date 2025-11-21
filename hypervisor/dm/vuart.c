@@ -37,6 +37,8 @@
 #endif
 #include <vm.h>
 #include <logmsg.h>
+#include <stg2_mm.h>
+
 
 /**
  * @addtogroup vp-dm_vperipheral
@@ -140,6 +142,7 @@ static inline void init_fifo(struct acrn_vuart *vu)
 	reset_fifo(&(vu->rxfifo));
 }
 
+#define LSR_INT_ANY	(LSR_OE | LSR_PE | LSR_FE | LSR_BI)
 /*
  * The IIR returns a prioritized interrupt reason:
  * - receive data available
@@ -151,9 +154,9 @@ static uint8_t vuart_intr_reason(const struct acrn_vuart *vu)
 {
 	uint8_t ret;
 
-	if (((vu->lsr & (LSR_OE | LSR_BI)) != 0U) && ((vu->ier & IER_ELSI) != 0U)) {
+	if (((vu->lsr & LSR_INT_ANY) != 0U) && ((vu->ier & IER_ELSI) != 0U)) {
 		ret = IIR_RLS;
-	} else if ((fifo_numchars(&vu->rxfifo) > 0U) && ((vu->ier & IER_ERBFI) != 0U)) {
+	} else if (((vu->lsr & LSR_DR) != 0U) && ((vu->ier & IER_ERBFI) != 0U)) {
 		ret = IIR_RXRDY;
 	} else if (vu->thre_int_pending && ((vu->ier & IER_ETBEI) != 0U)) {
 		ret = IIR_TXRDY;
@@ -182,7 +185,7 @@ static struct acrn_vuart *find_vuart_by_port(struct acrn_vm *vm, uint16_t offset
 }
 
 static void vuart_trigger_level_intr(const struct acrn_vuart *vu, bool assert)
-{
+{	
 	arch_trigger_level_intr(vu->vm, vu->irq, assert);
 }
 
@@ -203,6 +206,7 @@ void vuart_toggle_intr(const struct acrn_vuart *vu)
 	} else
 #endif
 	if (intr_reason != IIR_NOPEND) {
+	pr_err("bosheng vuart call level intr, irq:%d\n",vu->irq);
 		vuart_trigger_level_intr(vu, true);
 	} else {
 		vuart_trigger_level_intr(vu, false);
@@ -336,7 +340,7 @@ static void write_reg(struct acrn_vuart *vu, uint16_t reg, uint8_t value_u8)
 			}
 			break;
 		case UART16550_LCR:
-			vu->lcr = value_u8;
+			vu->lcr = value_u8 ;
 			break;
 		case UART16550_MCR:
 			/* Apply mask so that bits 5-7 are 0 */
@@ -562,7 +566,7 @@ uint8_t vuart_read_reg(struct acrn_vuart *vu, uint16_t offset)
 			}
 			reg = vu->lsr;
 			/* The LSR_OE bit is cleared on LSR read */
-			vu->lsr &= ~(LSR_OE | LSR_BI);
+			vu->lsr &= ~LSR_OE;
 			break;
 		case UART16550_MSR:
 			/*
@@ -744,6 +748,23 @@ bool is_vuart_intx(const struct acrn_vm *vm, uint32_t intx_gsi)
 	return ret;
 }
 
+static int32_t vuart_access_handler(struct io_request *io_req, void *private_data)
+{
+	struct acrn_vuart *vu = (struct acrn_vuart *)private_data;
+	struct acrn_mmio_request *mmio = &io_req->reqs.mmio_request;
+	uint32_t offset = mmio->address - 0x10000000;
+
+//	pr_err("bosheng vuart access\n");
+	if (vu != NULL) {
+		if (mmio->direction == ACRN_IOREQ_DIR_WRITE) {
+			vuart_write_reg(vu, offset,  (uint8_t)(mmio->value));
+		} else {
+			mmio->value = (uint64_t)vuart_read_reg(vu, offset);
+		}
+	}
+
+	return 0;
+}
 /**
  * @brief Initialize legacy virtual UART devices.
  *
@@ -772,20 +793,30 @@ void init_legacy_vuarts(struct acrn_vm *vm, const struct vuart_config *vu_config
 	struct acrn_vuart *vu;
 
 	for (i = 0U; i < MAX_VUART_NUM_PER_VM; i++) {
-		if ((vu_config[i].type == VUART_LEGACY_PIO) &&
-				(vu_config[i].addr.port_base != INVALID_COM_BASE)) {
+		if (vu_config) {
+			pr_err("bosheng force  mmio vuart\n");
+			vu = &vm->vuart[i];
+			setup_vuart(vm, i);
+			vu->port_base = vu_config[i].addr.port_base;
+			vu->irq = 10;
+			register_mmio_emulation_handler(vm, vuart_access_handler, 0x10000000,
+				0x10000000 + 0x100, (void *)vu, false);
+			stg2pt_del_mr(vm, vm->root_stg2ptp, 0x10000000, 0x1000);
+			vu->active = true;
+			vu->escaping = false;
+			if (i != 0U) {
+				vuart_setup_connection(vm, &vu_config[i], i);
+			}
+		} else {
+			pr_err("bosheng pio vuart, should not be here\n");
 			vu = &vm->vuart[i];
 			setup_vuart(vm, i);
 			vu->port_base = vu_config[i].addr.port_base;
 			vu->irq = vu_config[i].irq;
-			if (vuart_register_io_handler(vm, vu->port_base, i) != 0U) {
-				vu->active = true;
-				vu->escaping = false;
-			}
-			/*
-			 * The first vuart is used for VM console.
-			 * The rest of vuarts are used for connection.
-			 */
+			vuart_register_io_handler(vm, vu->port_base, i);
+			vu->active = true;
+			vu->escaping = false;
+			pr_err("bosheng register mmio vuart\n");
 			if (i != 0U) {
 				vuart_setup_connection(vm, &vu_config[i], i);
 			}
