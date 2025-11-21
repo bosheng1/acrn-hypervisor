@@ -100,6 +100,7 @@ int32_t arch_init_vm(struct acrn_vm *vm, struct acrn_vm_config *vm_config)
 	arch_prepare_vm_memmap(vm);
 	create_vm_memmap(vm);
 	(void)vm_config;
+	init_legacy_vuarts(vm, vm_config->vuart);
 	vplic_init(vm);
 
 	return 0;
@@ -155,8 +156,56 @@ static void fdt_set_hart_isa_str_all(void *fdt, const char *isa_str)
 			}
 		}
 	}
+
 }
 
+void print_interrupts_property(const void *data, int len) {
+    const fdt32_t *interrupts = (const fdt32_t *)data;
+    int cells = len / 4;
+
+    printf("interrupts = <");
+    for (int i = 0; i < cells; i++) {
+        if (i > 0) printf(" ");
+        printf("%d", fdt32_to_cpu(interrupts[i]));
+    }
+    printf(">\n");
+}
+void print_interrupts_parent_property(const void *data, int len) {
+    const fdt32_t *interrupts = (const fdt32_t *)data;
+    int cells = len / 4;
+
+    printf("interrupts parent = <");
+    for (int i = 0; i < cells; i++) {
+        if (i > 0) printf(" ");
+        printf("%d", fdt32_to_cpu(interrupts[i]));
+    }
+    printf(">\n");
+}
+
+void print_device_properties(void *fdt, int node) {
+    int prop_offset = 0;
+    const char *prop_name;
+    const void *prop_data;
+    int prop_len;
+
+    fdt_for_each_property_offset(prop_offset, fdt, node) {
+        prop_data = fdt_getprop_by_offset(fdt, prop_offset, &prop_name, &prop_len);
+
+        if (!prop_data || !prop_name) continue;
+
+        pr_err("  %s: ", prop_name);
+
+        if (strcmp(prop_name, "compatible") == 0) {
+           pr_err("device compatible:%s\n", prop_data); 
+	}
+        if (strcmp(prop_name, "interrupts") == 0) {
+			print_interrupts_property(prop_data, prop_len);
+	}
+        if (strcmp(prop_name, "interrupt-parent") == 0) {
+			print_interrupts_parent_property(prop_data, prop_len);
+	}
+    }
+}
 void arch_init_service_vm_vfdt(struct acrn_vm *vm)
 {
 	/* TODO: For now hardcode the isa string.
@@ -164,6 +213,35 @@ void arch_init_service_vm_vfdt(struct acrn_vm *vm)
 	 * To do it formally, get isa string from host, remove extensions
 	 * that we do not support (such as "h") and pass to vm.
 	 */
+	void *fdt = vm->arch_vm.fdt_raw;
 	const char *isa_str = "rv64imafdc_zicsr_zifencei_sstc";
 	fdt_set_hart_isa_str_all(vm->arch_vm.fdt_raw, isa_str);
+	int node = 0;
+	node = fdt_node_offset_by_compatible(fdt, -1, "riscv,plic0");
+	const uint32_t * phandle_prop = fdt_getprop(fdt, node, "phandle", NULL);
+	uint32_t phandle = *phandle_prop;
+	int parent_node, serial_node;
+	parent_node = fdt_path_offset(fdt, "/soc");
+	serial_node = fdt_add_subnode(fdt, parent_node, "serial@10000000");
+	if (serial_node >0) {
+		pr_err(" create uart dt\n");
+		fdt_setprop_cell(fdt, serial_node, "interrupts", 10);
+		fdt_setprop_cell(fdt, serial_node, "interrupt-parent", cpu_to_fdt32(phandle));
+		uint32_t clock_freq = 3686400;
+		fdt_setprop_cell(fdt, serial_node, "clock-frequency", clock_freq);
+		fdt_setprop_string(fdt, serial_node, "compatible", "ns16550a");
+		uint32_t reg_prop[4];
+		reg_prop[0] = cpu_to_fdt32((uint32_t)(0));
+		reg_prop[1] = cpu_to_fdt32((uint32_t)(0x10000000));
+		reg_prop[2] = cpu_to_fdt32((uint32_t)(0));
+		reg_prop[3] = cpu_to_fdt32((uint32_t)(0x100));
+		fdt_setprop(fdt, serial_node, "reg", reg_prop, sizeof(reg_prop));
+
+	}
+	int child_node = 0;
+	fdt_for_each_subnode(child_node, fdt, parent_node) {
+		const char *name = fdt_get_name(fdt, child_node, NULL);
+	        pr_err("Device: %s (offset: %d)\n", name ? name : "unknown", child_node);
+		print_device_properties(fdt, child_node);
+	}
 }
