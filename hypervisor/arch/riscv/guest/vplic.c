@@ -140,6 +140,26 @@ static void vplic_vcpu_intr_deassert(struct acrn_vcpu *vcpu)
 	vcpu_clear_intr(vcpu, HVIP_VSEIP);
 }
 
+static void vplic_update_pending(struct acrn_vplic *vplic)
+{
+	struct plic_regs *regs = &vplic->regs;
+	for (uint32_t i = 0U; i < vplic_num_fields(vplic); i++) {
+		uint32_t pending = regs->pending[i];
+		uint32_t pin_level = vplic->pin_level[i];
+
+		if (!pin_level)
+			continue;
+
+		for (uint32_t j = 0U; j < 32U; j++) {
+			bool assert = pin_level & (1U << j);
+
+			if (assert) {
+				regs->pending[i] = pending | (1U << j);
+			}
+		}
+	}
+}
+
 static void vplic_update_context(struct acrn_vplic *vplic, uint32_t context_id)
 {
 	struct acrn_vcpu *vcpu;
@@ -282,6 +302,7 @@ static void vplic_write(struct acrn_vplic *vplic, uint64_t offset, uint32_t data
 			} else if (reg_id == PLIC_EOI_BASE) {
 				if (data < vplic->info.source_num) {
 					vplic_clear_claimed(regs, context_index, data);
+					vplic_update_pending(vplic);
 					vplic_update_context(vplic, context_index);
 				}
 			} else {
@@ -302,6 +323,8 @@ void vplic_accept_intr(struct acrn_vm *vm, uint32_t irq, bool assert)
 {
 	struct acrn_vplic *vplic;
 	uint64_t flags;
+	uint32_t pin_index = 0;
+	uint32_t pin_mask = 0;
 
 	vplic = &vm->arch_vm.vplic;
 	if (!vplic->enabled)
@@ -309,10 +332,15 @@ void vplic_accept_intr(struct acrn_vm *vm, uint32_t irq, bool assert)
 	spinlock_irqsave_obtain(&vplic->lock, &flags);
 	if (irq < vplic->info.source_num) {
 		/* only set pending bit, clear operation is happening on claim read */
+		pin_index = irq >> 5U;
+		pin_mask = (1U << (irq & 31U));
 		if (assert) {
 			dev_dbg(DBG_LEVEL_VPLIC, "vplic(vmid:%d) accept intr, irq:%u\n", vplic->vm->vm_id, irq);
+			vplic->pin_level[pin_index] |= pin_mask;
 			vplic_set_pending(&vplic->regs, irq);
 			vplic_update(vplic);
+		} else {
+			vplic->pin_level[pin_index] &= ~pin_mask;
 		}
 	} else {
 		dev_dbg(DBG_LEVEL_VPLIC, "vplic(vmid:%d) ignoring irq %u", vplic->vm->vm_id, irq);

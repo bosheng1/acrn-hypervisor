@@ -43,6 +43,7 @@ struct acrn_vplic {
 	uint32_t enable_base;
 	uint32_t context_base;
 	bool asserted[PLIC_VM_MAX_CONTEXTS];
+	uint32_t pin_level[PLIC_MAX_NUM_FIELDS];
 };
 
 void vplic_init(struct acrn_vm *vm);
