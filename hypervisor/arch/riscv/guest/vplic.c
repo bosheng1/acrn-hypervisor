@@ -86,14 +86,14 @@ static void vplic_clear_pending(struct plic_regs *regs, uint32_t irq)
         vplic_reg_clear_bit(&regs->pending[irq >> 5U], irq & 31U);
 }
 
-static void vplic_set_claimed(struct plic_regs *regs, uint32_t irq)
+static void vplic_set_claimed(struct plic_regs *regs, uint32_t context_id, uint32_t irq)
 {
-        vplic_reg_set_bit(&regs->claimed[irq >> 5U], irq & 31U);
+        vplic_reg_set_bit(&regs->claimed[context_id], irq);
 }
 
-static void vplic_clear_claimed(struct plic_regs *regs, uint32_t irq)
+static void vplic_clear_claimed(struct plic_regs *regs, uint32_t context_id, uint32_t irq)
 {
-        vplic_reg_clear_bit(&regs->claimed[irq >> 5U], irq & 31U);
+        vplic_reg_clear_bit(&regs->claimed[context_id], irq);
 }
 
 static uint32_t vplic_get_deliverable_irq(struct acrn_vplic *vplic, uint32_t context_id)
@@ -103,7 +103,7 @@ static uint32_t vplic_get_deliverable_irq(struct acrn_vplic *vplic, uint32_t con
 	uint32_t max_prio = regs->threshold[context_id];
 
 	for (uint32_t i = 0U; i < vplic_num_fields(vplic); i++) {
-		uint32_t pending_enabled_not_claimed = (regs->pending[i] & ~regs->claimed[i]) &
+		uint32_t pending_enabled_not_claimed = (regs->pending[i] & ~regs->claimed[context_id]) &
 							regs->enable[context_id][i];
 
 		if (!pending_enabled_not_claimed)
@@ -215,7 +215,7 @@ static void vplic_read(struct acrn_vplic *vplic, uint64_t offset, uint32_t *data
 				irq = vplic_get_deliverable_irq(vplic, context_index);
 				if (irq) {
 					vplic_clear_pending(regs, irq);
-					vplic_set_claimed(regs, irq);
+					vplic_set_claimed(regs, context_index, irq);
 				}
 				vplic_update_context(vplic, context_index);
 				*data = irq;
@@ -281,7 +281,7 @@ static void vplic_write(struct acrn_vplic *vplic, uint64_t offset, uint32_t data
 				vplic_update_context(vplic, context_index);
 			} else if (reg_id == PLIC_EOI_BASE) {
 				if (data < vplic->info.source_num) {
-					vplic_clear_claimed(regs, data);
+					vplic_clear_claimed(regs, context_index, data);
 					vplic_update_context(vplic, context_index);
 				}
 			} else {
